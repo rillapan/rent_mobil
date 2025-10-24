@@ -9,8 +9,8 @@
         exit();
     }
     $id_login = $_SESSION['USER']['id_login'];
-    $hasil = $koneksi->prepare("SELECT mobil.merk, booking.* FROM booking JOIN mobil ON 
-    booking.id_mobil=mobil.id_mobil WHERE booking.id_login = ? ORDER BY id_booking DESC");
+    $hasil = $koneksi->prepare("SELECT mobil.merk, booking.*, supir.nama_supir, supir.harga_sewa as harga_supir FROM booking JOIN mobil ON
+    booking.id_mobil=mobil.id_mobil LEFT JOIN supir ON booking.id_supir=supir.id_supir WHERE booking.id_login = ? ORDER BY id_booking DESC");
     $hasil->execute(array($id_login));
     $count = $hasil->rowCount();
 ?>
@@ -70,6 +70,7 @@
                                 <th>Nama </th>
                                 <th>Tanggal Sewa </th>
                                 <th class="text-center">Lama Sewa </th>
+                                <th>Supir</th>
                                 <th>Total Harga</th>
                                 <th class="text-center">Konfirmasi</th>
                                 <th class="text-center">Aksi</th>
@@ -84,6 +85,18 @@
                                 <td class="align-middle"><?= htmlspecialchars($isi['nama']);?></td>
                                 <td class="align-middle"><?= date('d/m/Y', strtotime($isi['tanggal']));?></td>
                                 <td class="text-center align-middle"><?= htmlspecialchars($isi['lama_sewa']);?> hari</td>
+                                <td class="align-middle">
+                                    <?php if (!empty($isi['nama_supir'])): ?>
+                                        <div>
+                                            <strong><?= htmlspecialchars($isi['nama_supir']);?></strong><br>
+                                            <small class="text-muted">
+                                                <?= htmlspecialchars($isi['lama_sewa']);?> hari x Rp<?= number_format($isi['harga_supir']);?>
+                                            </small>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td class="align-middle">Rp. <?= number_format(htmlspecialchars($isi['total_harga']));?></td>
                                 <td class="text-center align-middle">
                                     <?php if($isi['konfirmasi_pembayaran'] == 'Pembayaran Diterima'){ ?>

@@ -397,11 +397,11 @@
       <ul class="sidebar-nav">
         <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'index.php' ? ' active' : '' ?>" href="index.php"><i class="fas fa-home"></i> Home</a></li>
         <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'blog.php' ? ' active' : '' ?>" href="blog.php"><i class="fas fa-car"></i> Daftar Mobil</a></li>
+        <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'supir.php' ? ' active' : '' ?>" href="supir.php"><i class="fas fa-user"></i> Supir</a></li>
         <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'kontak.php' ? ' active' : '' ?>" href="kontak.php"><i class="fas fa-phone"></i> Kontak Kami</a></li>
         <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'cek_pesanan.php' ? ' active' : '' ?>" href="cek_pesanan.php"><i class="fas fa-receipt"></i> Cek Pesanan</a></li>
         <?php if(!empty($_SESSION['USER'])){?>
         <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'history.php' ? ' active' : '' ?>" href="history.php"><i class="fas fa-history"></i> Daftar Pesanan</a></li>
-        <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'profil.php' ? ' active' : '' ?>" href="profil.php"><i class="fas fa-user"></i> Profil</a></li>
         <li class="nav-item">
           <a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'notifikasi.php' ? ' active' : '' ?>" href="notifikasi.php">
             <i class="fas fa-bell"></i> Notifikasi
@@ -414,7 +414,7 @@
       </ul>
       <?php if(!empty($_SESSION['USER'])){?>
       <div class="sidebar-user">
-        <div class="user-greeting mb-2"><i class="fas fa-user"></i> Hallo, <?php echo $_SESSION['USER']['nama_pengguna'];?></div>
+        <a href="profil.php" class="user-greeting mb-2" style="text-decoration: none; color: inherit;"><i class="fas fa-user"></i> Hallo, <?php echo $_SESSION['USER']['nama_pengguna'];?></a>
         <a class="logout-btn d-block text-center" id="sidebar-logout-link" href="<?php echo $url;?>admin/logout.php">Logout</a>
       </div>
       <?php }?>
@@ -463,7 +463,7 @@
           <div class="col-auto">
             <div class="user-area">
               <?php if(!empty($_SESSION['USER'])){?>
-                <span class="user-greeting"><i class="fas fa-user"></i> Hallo, <?php echo $_SESSION['USER']['nama_pengguna'];?></span>
+                <a href="profil.php" class="user-greeting" style="text-decoration: none; color: inherit;"><i class="fas fa-user"></i> Hallo, <?php echo $_SESSION['USER']['nama_pengguna'];?></a>
                 <a class="logout-btn" id="logout-link" href="<?php echo $url;?>admin/logout.php">Logout</a>
               <?php } else { ?>
                 <a class="nav-link" id="desktopLoginBtn" href="#"><i class="fas fa-sign-in-alt"></i> Login</a>
@@ -481,11 +481,11 @@
           <ul class="navbar-nav mr-auto">
             <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'index.php' ? ' active' : '' ?>" href="index.php"><i class="fas fa-home"></i> Home</a></li>
             <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'blog.php' ? ' active' : '' ?>" href="blog.php"><i class="fas fa-car"></i> Daftar Mobil</a></li>
+            <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'supir.php' ? ' active' : '' ?>" href="supir.php"><i class="fas fa-user"></i> Supir</a></li>
             <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'kontak.php' ? ' active' : '' ?>" href="kontak.php"><i class="fas fa-phone"></i> Kontak Kami</a></li>
             <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'cek_pesanan.php' ? ' active' : '' ?>" href="cek_pesanan.php"><i class="fas fa-receipt"></i> Cek Pesanan</a></li>
             <?php if(!empty($_SESSION['USER'])){?>
             <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'history.php' ? ' active' : '' ?>" href="history.php"><i class="fas fa-history"></i> Daftar Pesanan</a></li>
-            <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'profil.php' ? ' active' : '' ?>" href="profil.php"><i class="fas fa-user"></i> Profil</a></li>
             <li class="nav-item">
               <a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'notifikasi.php' ? ' active' : '' ?>" href="notifikasi.php">
                 <i class="fas fa-bell"></i> Notifikasi

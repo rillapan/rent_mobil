@@ -96,9 +96,12 @@ if($_GET['id'] == 'daftar')
 
 if($_GET['id'] == 'booking')
 {
-    $total = $_POST['total_harga'] * $_POST['lama_sewa'];
+    $harga_mobil = $_POST['harga_mobil'];
+    $harga_supir = $_POST['harga_supir'];
+    $lama_sewa = $_POST['lama_sewa'];
+    $total = ($harga_mobil + $harga_supir) * $lama_sewa;
     $unik  = random_int(100,999);
-    $total_harga = $total+$unik;
+    $total_harga = $total + $unik;
 
     $data[] = time();
     $data[] = $_POST['id_login'];
@@ -108,22 +111,30 @@ if($_GET['id'] == 'booking')
     $data[] = $_POST['alamat'];
     $data[] = $_POST['no_tlp'];
     $data[] = $_POST['tanggal'];
-    $data[] = $_POST['lama_sewa'];
+    $data[] = $lama_sewa;
     $data[] = $total_harga;
     $data[] = "Belum Bayar";
     $data[] = date('Y-m-d');
+    $data[] = $_POST['id_supir'] ?: null; // ID supir, null jika tidak dipilih
 
-    $sql = "INSERT INTO booking (kode_booking, 
-    id_login, 
-    id_mobil, 
-    ktp, 
-    nama, 
-    alamat, 
-    no_tlp, 
-    tanggal, lama_sewa, total_harga, konfirmasi_pembayaran, tgl_input) 
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+    $sql = "INSERT INTO booking (kode_booking,
+    id_login,
+    id_mobil,
+    ktp,
+    nama,
+    alamat,
+    no_tlp,
+    tanggal, lama_sewa, total_harga, konfirmasi_pembayaran, tgl_input, id_supir)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
     $row = $koneksi->prepare($sql);
     $row->execute($data);
+
+    // Update status supir jika dipilih
+    if (!empty($_POST['id_supir'])) {
+        $sql_update_supir = "UPDATE supir SET status = 'Sedang Digunakan' WHERE id_supir = ?";
+        $row_update_supir = $koneksi->prepare($sql_update_supir);
+        $row_update_supir->execute([$_POST['id_supir']]);
+    }
 
     header('Location: ../bayar.php?id='.$data[0].'&status=bookingsuccess');
 }

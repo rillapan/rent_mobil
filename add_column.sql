@@ -1,0 +1,1 @@
+ALTER TABLE booking ADD COLUMN id_supir INT(11) DEFAULT NULL;

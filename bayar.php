@@ -71,54 +71,94 @@
 <br>
 <br>
 <div class="container my-4">
-<div class="row">
-    <div class="col-sm-4">
-
-        <div class="card shadow-lg">
-            <div class="card-header text-white">
-                <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i> Pembayaran Dapat Melalui</h5>
-            </div>
-            <div class="card-body text-center">
-                <p class="lead mb-0">Transfer ke Rekening:</p>
-                <h4 class="text-primary"><strong><?= $info_web->no_rek;?></strong></h4>
-                <p class="text-muted">Atas Nama: <?= $info_web->nama_rental;?></p>
-                <hr/>
-                <p class="text-muted">Jumlah yang harus dibayar:</p>
-                <h3 class="text-success">Rp. <?= number_format($hasil['total_harga'] + $unik);?></h3>
-                <p class="text-muted">*Tambahkan kode unik <strong><?= $unik;?></strong> untuk mempermudah verifikasi.</p>
+    <!-- Bagian Atas: Pembayaran, Detail Mobil, Detail Supir -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-lg">
+                <div class="card-header text-white">
+                    <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i> Pembayaran Dapat Melalui</h5>
+                </div>
+                <div class="card-body text-center">
+                    <p class="lead mb-0">Transfer ke Rekening:</p>
+                    <h4 class="text-primary"><strong><?= $info_web->no_rek;?></strong></h4>
+                    <p class="text-muted">Atas Nama: <?= $info_web->nama_rental;?></p>
+                    <hr/>
+                    <p class="text-muted">Jumlah yang harus dibayar:</p>
+                    <h3 class="text-success">Rp. <?= number_format($hasil['total_harga'] + $unik);?></h3>
+                </div>
             </div>
         </div>
-        <br/>
-        <div class="card shadow-lg">
-            <div class="card-header text-white">
-                <h5 class="mb-0"><i class="fas fa-car me-2"></i> Detail Mobil</h5>
+        <div class="col-md-4">
+            <div class="card shadow-lg">
+                <div class="card-header text-white">
+                    <h5 class="mb-0"><i class="fas fa-car me-2"></i> Detail Mobil</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <img src="assets/image/<?= htmlspecialchars($isi['gambar']);?>" class="img-fluid rounded" alt="Gambar Mobil">
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Merk:</strong> <?= htmlspecialchars($isi['merk']);?><br>
+                        <strong>No. Plat:</strong> <?= htmlspecialchars($isi['no_plat']);?><br>
+                        <strong>Harga:</strong> Rp<?= number_format(htmlspecialchars($isi['harga']));?>/hari
+                    </li>
+                    <li class="list-group-item price-item">
+                        <i class="fas fa-money-bill-wave"></i> Rp. <?php echo number_format(htmlspecialchars($isi['harga']));?>/ hari
+                    </li>
+                </ul>
             </div>
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item">
-                    <img src="assets/image/<?= htmlspecialchars($isi['gambar']);?>" class="img-fluid rounded" alt="Gambar Mobil">
-                </li>
-                <li class="list-group-item">
-                    <strong>Merk:</strong> <?= htmlspecialchars($isi['merk']);?><br>
-                    <strong>No. Plat:</strong> <?= htmlspecialchars($isi['no_plat']);?><br>
-                    <strong>Harga:</strong> Rp<?= number_format(htmlspecialchars($isi['harga']));?>/hari
-                </li>
-                <?php if($isi['status'] == 'Tersedia'){?>
-                    <li class="list-group-item status-available">
-                        <i class="fas fa-check-circle"></i> Tersedia
+        </div>
+        <div class="col-md-4">
+            <?php if (!empty($hasil['id_supir'])): ?>
+            <?php
+                $id_supir = $hasil['id_supir'];
+                $supir = $koneksi->query("SELECT * FROM supir WHERE id_supir = '$id_supir'")->fetch();
+            ?>
+            <div class="card shadow-lg">
+                <div class="card-header text-white">
+                    <h5 class="mb-0"><i class="fas fa-user-tie me-2"></i> Detail Supir</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item text-center">
+                        <?php if (!empty($supir['foto'])): ?>
+                            <img src="assets/image/<?= htmlspecialchars($supir['foto']);?>" class="img-fluid rounded-circle" alt="Foto Supir" style="width: 100px; height: 100px; object-fit: cover;">
+                        <?php else: ?>
+                            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 100px; height: 100px;">
+                                <i class="fas fa-user-tie fa-3x text-secondary"></i>
+                            </div>
+                        <?php endif; ?>
                     </li>
-                <?php }else{?>
-                    <li class="list-group-item status-not-available">
-                        <i class="fas fa-times-circle"></i> Tidak Tersedia
+                    <li class="list-group-item">
+                        <strong>Nama Supir:</strong> <?= htmlspecialchars($supir['nama_supir']);?><br>
+                        <strong>Pengalaman:</strong> <?= htmlspecialchars($supir['pengalaman']);?> tahun<br>
+                        <strong>Harga Sewa:</strong> Rp<?= number_format(htmlspecialchars($supir['harga_sewa']));?>/hari
                     </li>
-                <?php }?>
-               
-                <li class="list-group-item price-item">
-                    <i class="fas fa-money-bill-wave"></i> Rp. <?php echo number_format(htmlspecialchars($isi['harga']));?>/ hari
-                </li>
-            </ul>
+                    <li class="list-group-item">
+                        <strong>Deskripsi:</strong><br>
+                        <p class="mb-0 text-muted small"><?= nl2br(htmlspecialchars($supir['deskripsi']));?></p>
+                    </li>
+                    <li class="list-group-item price-item">
+                        <i class="fas fa-money-bill-wave"></i> Rp. <?php echo number_format(htmlspecialchars($supir['harga_sewa']));?>/ hari
+                    </li>
+                </ul>
+            </div>
+            <?php else: ?>
+            <div class="card shadow-lg">
+                <div class="card-header text-white">
+                    <h5 class="mb-0"><i class="fas fa-user-tie me-2"></i> Detail Supir</h5>
+                </div>
+                <div class="card-body text-center">
+                    <i class="fas fa-user-tie fa-3x text-secondary mb-3"></i>
+                    <p class="text-muted">Tidak ada supir yang dipilih</p>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
-    <div class="col-sm-8">
+
+    <!-- Bagian Bawah: Detail Booking -->
+    <div class="row">
+        <div class="col-12">
          <div class="card shadow-lg">
             <div class="card-header text-white">
                 <h5 class="mb-0"><i class="fas fa-receipt me-2"></i> Detail Booking</h5>

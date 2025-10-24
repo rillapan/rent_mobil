@@ -352,6 +352,11 @@
           </a>
         </li>
         <li class="nav-item">
+          <a class="nav-link <?php if($title_web == 'Daftar Supir' || $title_web == 'Tambah Supir' || $title_web == 'Edit Supir'){ echo 'active';}?>" href="<?php echo $url;?>admin/supir/supir.php">
+            <i class="fas fa-user-tie"></i> Management Supir
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="#">
             <i class="fas fa-user"></i> Hallo, <?php echo $hasil_login['nama_pengguna'];?>
           </a>
@@ -384,6 +389,9 @@
             </li>
             <li class="nav-item <?php if($title_web == 'Peminjaman'){ echo 'active';}?>">
               <a class="nav-link" href="<?php echo $url;?>admin/peminjaman/peminjaman.php">Peminjaman</a>
+            </li>
+            <li class="nav-item <?php if($title_web == 'Daftar Supir' || $title_web == 'Tambah Supir' || $title_web == 'Edit Supir'){ echo 'active';}?>">
+              <a class="nav-link" href="<?php echo $url;?>admin/supir/supir.php">Management Supir</a>
             </li>
           </ul>
           <ul class="navbar-nav my-2 my-lg-0">

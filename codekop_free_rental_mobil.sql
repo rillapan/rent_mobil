@@ -40,7 +40,8 @@ CREATE TABLE `booking` (
   `lama_sewa` int(11) NOT NULL,
   `total_harga` int(11) NOT NULL,
   `konfirmasi_pembayaran` varchar(255) NOT NULL,
-  `tgl_input` varchar(255) NOT NULL
+  `tgl_input` varchar(255) NOT NULL,
+  `id_supir` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
