@@ -3,6 +3,7 @@
     session_start();
     require 'koneksi/koneksi.php';
     include 'header.php';
+    include 'progress_bar.php';
     if(empty($_SESSION['USER']))
     {
         echo '<script>alert("Harap Login");window.location="index.php"</script>';
@@ -158,6 +159,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id_booking'])) {
     $pesan = "Konfirmasi Terkirim! Pembayaran Anda sedang kami proses. Terima kasih.";
     $user_id = $_SESSION['USER']['id_login'];
     $koneksi->query("INSERT INTO notifikasi (id_login, pesan, status_baca) VALUES ('$user_id', '$pesan', 0)");
+
+    // Kirim WhatsApp notifikasi
+    $user_no_hp = $_SESSION['USER']['no_hp'];
+    if (!empty($user_no_hp)) {
+        kirim_whatsapp($user_no_hp, $pesan);
+    }
 
     // Redirect ke halaman sukses
     header("Location: history.php?status=konfirmasisuccess");

@@ -26,12 +26,11 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <?php 
+                        <?php
                             $no = 1;
                             $sql = "SELECT * FROM login WHERE level = 'Pengguna' ORDER BY id_login DESC";
-                            $row = $koneksi->prepare($sql);
-                            $row->execute();
-                            $hasil = $row->fetchAll(PDO::FETCH_OBJ);
+                            $result = mysqli_query($koneksi, $sql);
+                            $hasil = mysqli_fetch_all($result, MYSQLI_ASSOC);
                             foreach($hasil as $r){
                         ?>
                         <tr>

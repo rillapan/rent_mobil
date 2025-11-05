@@ -3,6 +3,7 @@
     session_start();
     require 'koneksi/koneksi.php';
     include 'header.php';
+    include 'progress_bar.php';
     if(empty($_SESSION['USER']))
     {
         echo '<script>alert("Harap login !");window.location="index.php"</script>';

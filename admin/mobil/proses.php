@@ -51,20 +51,21 @@ if ($aksi == 'tambah') {
             $keunggulan = isset($_POST['keunggulan']) ? array_filter($_POST['keunggulan']) : [];
             $keunggulan_string = implode('||', $keunggulan);
 
-            $data[] = $_POST['no_plat'];
-            $data[] = $_POST['merk'];
-            $data[] = $_POST['harga'];
-            $data[] = $_POST['deskripsi'];
-            $data[] = $keunggulan_string;
-            $data[] = $_POST['status'];
-            $data[] = $newfilename;
+            $no_plat = $_POST['no_plat'];
+            $merk = $_POST['merk'];
+            $harga = $_POST['harga'];
+            $deskripsi = $_POST['deskripsi'];
+            $keunggulan = $keunggulan_string;
+            $status = $_POST['status'];
+            $gambar = $newfilename;
 
-            $sql = "INSERT INTO `mobil`(`no_plat`, `merk`, `harga`, `deskripsi`, `keunggulan`, `status`, `gambar`) 
+            $sql = "INSERT INTO `mobil`(`no_plat`, `merk`, `harga`, `deskripsi`, `keunggulan`, `status`, `gambar`)
                 VALUES (?,?,?,?,?,?,?)";
-            $row = $koneksi->prepare($sql);
-            $row->execute($data);
+            $stmt = mysqli_prepare($koneksi, $sql);
+            mysqli_stmt_bind_param($stmt, "sssssss", $no_plat, $merk, $harga, $deskripsi, $keunggulan, $status, $gambar);
+            mysqli_stmt_execute($stmt);
 
-            $id_mobil = $koneksi->lastInsertId();
+            $id_mobil = mysqli_insert_id($koneksi);
 
             if (isset($_FILES['gambar_tambahan'])) {
                 foreach ($_FILES['gambar_tambahan']['tmp_name'] as $key => $tmp_name) {
@@ -80,8 +81,9 @@ if ($aksi == 'tambah') {
 
                             if (move_uploaded_file($filepath_tambahan, $target_path_tambahan)) {
                                 $sql_gambar = "INSERT INTO mobil_gambar (id_mobil, nama_gambar) VALUES (?, ?)";
-                                $stmt_gambar = $koneksi->prepare($sql_gambar);
-                                $stmt_gambar->execute([$id_mobil, $newfilename_tambahan]);
+                                $stmt_gambar = mysqli_prepare($koneksi, $sql_gambar);
+                                mysqli_stmt_bind_param($stmt_gambar, "ss", $id_mobil, $newfilename_tambahan);
+                                mysqli_stmt_execute($stmt_gambar);
                             }
                         }
                     }
@@ -104,17 +106,21 @@ if ($aksi == 'tambah') {
     if (isset($_POST['hapus_gambar'])) {
         foreach ($_POST['hapus_gambar'] as $id_gambar) {
             $sql_select_gambar = "SELECT nama_gambar FROM mobil_gambar WHERE id_gambar = ?";
-            $stmt_select_gambar = $koneksi->prepare($sql_select_gambar);
-            $stmt_select_gambar->execute([$id_gambar]);
-            $nama_gambar = $stmt_select_gambar->fetchColumn();
+            $stmt_select_gambar = mysqli_prepare($koneksi, $sql_select_gambar);
+            mysqli_stmt_bind_param($stmt_select_gambar, "s", $id_gambar);
+            mysqli_stmt_execute($stmt_select_gambar);
+            $result_select = mysqli_stmt_get_result($stmt_select_gambar);
+            $row = mysqli_fetch_assoc($result_select);
+            $nama_gambar = $row['nama_gambar'];
 
             if ($nama_gambar && file_exists('../../assets/image/' . $nama_gambar)) {
                 unlink('../../assets/image/' . $nama_gambar);
             }
 
             $sql_delete_gambar = "DELETE FROM mobil_gambar WHERE id_gambar = ?";
-            $stmt_delete_gambar = $koneksi->prepare($sql_delete_gambar);
-            $stmt_delete_gambar->execute([$id_gambar]);
+            $stmt_delete_gambar = mysqli_prepare($koneksi, $sql_delete_gambar);
+            mysqli_stmt_bind_param($stmt_delete_gambar, "s", $id_gambar);
+            mysqli_stmt_execute($stmt_delete_gambar);
         }
     }
 
@@ -141,8 +147,9 @@ if ($aksi == 'tambah') {
 
                     if (move_uploaded_file($filepath_tambahan, $target_path_tambahan)) {
                         $sql_gambar = "INSERT INTO mobil_gambar (id_mobil, nama_gambar) VALUES (?, ?)";
-                        $stmt_gambar = $koneksi->prepare($sql_gambar);
-                        $stmt_gambar->execute([$id, $newfilename_tambahan]);
+                        $stmt_gambar = mysqli_prepare($koneksi, $sql_gambar);
+                        mysqli_stmt_bind_param($stmt_gambar, "ss", $id, $newfilename_tambahan);
+                        mysqli_stmt_execute($stmt_gambar);
                     }
                 }
             }
@@ -154,12 +161,11 @@ if ($aksi == 'tambah') {
     $keunggulan = isset($_POST['keunggulan']) ? array_filter($_POST['keunggulan']) : [];
     $keunggulan_string = implode('||', $keunggulan);
 
-    $data[] = $_POST['no_plat'];
-    $data[] = $_POST['merk'];
-    $data[] = $_POST['harga'];
-    $data[] = $_POST['deskripsi'];
-    $data[] = $keunggulan_string;
-    $data[] = $_POST['status'];
+    $no_plat = $_POST['no_plat'];
+    $merk = $_POST['merk'];
+    $harga = $_POST['harga'];
+    $deskripsi = $_POST['deskripsi'];
+    $status = $_POST['status'];
 
     if (isset($_FILES['gambar']) && $_FILES['gambar']['size'] > 0) {
         $filepath = $_FILES['gambar']['tmp_name'];
@@ -191,20 +197,20 @@ if ($aksi == 'tambah') {
                 if (file_exists('../../assets/image/'.$gambar)) {
                     unlink('../../assets/image/'.$gambar);
                 }
-                $data[] = $newfilename;
+                $gambar_update = $newfilename;
             } else {
                 header("location: mobil.php?pesan=gagal-upload");
                 exit();
             }
         }
     } else {
-        $data[] = $_POST['gambar_cek'];
+        $gambar_update = $_POST['gambar_cek'];
     }
 
-    $data[] = $id;
     $sql = "UPDATE mobil SET no_plat= ?, merk=?, harga=?, deskripsi=?, keunggulan=?, status=?, gambar=? WHERE id_mobil = ?";
-    $row = $koneksi->prepare($sql);
-    $success = $row->execute($data);
+    $stmt = mysqli_prepare($koneksi, $sql);
+    mysqli_stmt_bind_param($stmt, "ssssssss", $no_plat, $merk, $harga, $deskripsi, $keunggulan_string, $status, $gambar_update, $id);
+    $success = mysqli_stmt_execute($stmt);
 
     if ($success) {
         header("location: mobil.php?pesan=sukses-edit");
@@ -219,9 +225,11 @@ if ($aksi == 'tambah') {
     $gambar = $_GET['gambar'];
 
     $sql_check = "SELECT * FROM booking WHERE id_mobil = ?";
-    $row_check = $koneksi->prepare($sql_check);
-    $row_check->execute(array($id));
-    $cek_booking = $row_check->rowCount();
+    $stmt_check = mysqli_prepare($koneksi, $sql_check);
+    mysqli_stmt_bind_param($stmt_check, "s", $id);
+    mysqli_stmt_execute($stmt_check);
+    $result_check = mysqli_stmt_get_result($stmt_check);
+    $cek_booking = mysqli_num_rows($result_check);
 
     if ($cek_booking > 0) {
         header("location: mobil.php?pesan=gagal-hapus");
@@ -231,8 +239,9 @@ if ($aksi == 'tambah') {
             unlink('../../assets/image/'.$gambar);
         }
         $sql = "DELETE FROM mobil WHERE id_mobil = ?";
-        $row = $koneksi->prepare($sql);
-        $row->execute(array($id));
+        $stmt = mysqli_prepare($koneksi, $sql);
+        mysqli_stmt_bind_param($stmt, "s", $id);
+        mysqli_stmt_execute($stmt);
         header("location: mobil.php?pesan=sukses-hapus");
         exit();
     }

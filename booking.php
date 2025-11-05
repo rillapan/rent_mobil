@@ -3,12 +3,26 @@
     session_start();
     require 'koneksi/koneksi.php';
     include 'header.php';
+    include 'progress_bar.php';
     if(empty($_SESSION['USER']))
     {
         echo '<script>alert("Harap login !");window.location="index.php"</script>';
     }
-    $id = $_GET['id'];
+    $id = isset($_GET['id']) ? $_GET['id'] : '';
+    if (empty($id)) {
+        echo '<script>alert("ID mobil tidak ditemukan!");window.location="blog.php"</script>';
+        exit();
+    }
+    // Validate that id is numeric
+    if (!is_numeric($id)) {
+        echo '<script>alert("ID mobil tidak valid!");window.location="blog.php"</script>';
+        exit();
+    }
     $isi = $koneksi->query("SELECT * FROM mobil WHERE id_mobil = '$id'")->fetch();
+    if (!$isi) {
+        echo '<script>alert("Mobil tidak ditemukan!");window.location="blog.php"</script>';
+        exit();
+    }
 ?>
 <br>
 <br>

@@ -1,5 +1,6 @@
-- [x] Edit index.php: Change <div class="container mt-4"> to <div class="container-fluid mt-4">
-- [x] Edit detail.php: Change <div class="container mt-5"> to <div class="container-fluid mt-5">
-- [x] Edit booking.php: Change <div class="container"> to <div class="container-fluid">
-- [x] Edit blog.php: Change <div class="container my-4"> to <div class="container-fluid my-4">
-- [x] Test the changes by running the site
+- [x] Add phone number field to login table
+- [x] Update kirim_whatsapp function in koneksi/proses.php to use Fonnte API
+- [x] Add phone number input to registration and profile update forms
+- [x] Trigger WhatsApp notifications on booking confirmation
+- [x] Run SQL to add no_hp column to login table
+- [ ] Test WhatsApp sending functionality

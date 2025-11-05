@@ -8,17 +8,19 @@ if($_GET['id'] == 'login'){
 
     $pass = $_POST['pass'];
 
-    $row = $koneksi->prepare("SELECT * FROM login WHERE username = ? AND password = md5(?)");
+    $stmt = $koneksi->prepare("SELECT * FROM login WHERE username = ? AND password = md5(?)");
 
-    $row->execute(array($user,$pass));
+    $stmt->execute([$user, $pass]);
 
-    $hitung = $row->rowCount();
+    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $hitung = count($result);
 
     if($hitung > 0)
 
     {
 
-        $hasil = $row->fetch();
+        $hasil = $result[0];
 
         $_SESSION['USER'] = $hasil;
 
@@ -26,7 +28,7 @@ if($_GET['id'] == 'login'){
 
         {
 
-            header('Location: ../admin/index.php?status=loginsuccess');  
+            header('Location: ../admin/index.php?status=loginsuccess');
 
         }
 
@@ -54,19 +56,19 @@ if($_GET['id'] == 'daftar')
 
 {
 
-    $data[] = $_POST['nama'];
+    $nama = $_POST['nama'];
+    $user = $_POST['user'];
+    $pass = md5($_POST['pass']);
+    $level = 'pengguna';
+    $no_hp = $_POST['no_hp'];
 
-    $data[] = $_POST['user'];
+    $stmt = $koneksi->prepare("SELECT * FROM login WHERE username = ?");
 
-    $data[] = md5($_POST['pass']);
+    $stmt->execute([$user]);
 
-    $data[] = 'pengguna';
+    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $row = $koneksi->prepare("SELECT * FROM login WHERE username = ?");
-
-    $row->execute(array($_POST['user']));
-
-    $hitung = $row->rowCount();
+    $hitung = count($result);
 
     if($hitung > 0)
 
@@ -80,13 +82,13 @@ if($_GET['id'] == 'daftar')
 
     {
 
-        $sql = "INSERT INTO `login`(`nama_pengguna`, `username`, `password`, `level`)
+        $sql = "INSERT INTO `login`(`nama_pengguna`, `username`, `password`, `level`, `no_hp`)
 
-                 VALUES (?,?,?,?)";
+                 VALUES (?,?,?,?,?)";
 
-        $row = $koneksi->prepare($sql);
+        $stmt_insert = $koneksi->prepare($sql);
 
-        $row->execute($data);
+        $stmt_insert->execute([$nama, $user, $pass, $level, $no_hp]);
 
         header('Location: ../index.php?status=registersuccess');
 
@@ -103,19 +105,17 @@ if($_GET['id'] == 'booking')
     $unik  = random_int(100,999);
     $total_harga = $total + $unik;
 
-    $data[] = time();
-    $data[] = $_POST['id_login'];
-    $data[] = $_POST['id_mobil'];
-    $data[] = $_POST['ktp'];
-    $data[] = $_POST['nama'];
-    $data[] = $_POST['alamat'];
-    $data[] = $_POST['no_tlp'];
-    $data[] = $_POST['tanggal'];
-    $data[] = $lama_sewa;
-    $data[] = $total_harga;
-    $data[] = "Belum Bayar";
-    $data[] = date('Y-m-d');
-    $data[] = $_POST['id_supir'] ?: null; // ID supir, null jika tidak dipilih
+    $kode_booking = time();
+    $id_login = $_POST['id_login'];
+    $id_mobil = $_POST['id_mobil'];
+    $ktp = $_POST['ktp'];
+    $nama = $_POST['nama'];
+    $alamat = $_POST['alamat'];
+    $no_tlp = $_POST['no_tlp'];
+    $tanggal = $_POST['tanggal'];
+    $konfirmasi_pembayaran = "Belum Bayar";
+    $tgl_input = date('Y-m-d');
+    $id_supir = $_POST['id_supir'] ?: null; // ID supir, null jika tidak dipilih
 
     $sql = "INSERT INTO booking (kode_booking,
     id_login,
@@ -126,45 +126,44 @@ if($_GET['id'] == 'booking')
     no_tlp,
     tanggal, lama_sewa, total_harga, konfirmasi_pembayaran, tgl_input, id_supir)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    $row = $koneksi->prepare($sql);
-    $row->execute($data);
+    $stmt = $koneksi->prepare($sql);
+    $stmt->execute([$kode_booking, $id_login, $id_mobil, $ktp, $nama, $alamat, $no_tlp, $tanggal, $lama_sewa, $total_harga, $konfirmasi_pembayaran, $tgl_input, $id_supir]);
 
     // Update status supir jika dipilih
     if (!empty($_POST['id_supir'])) {
         $sql_update_supir = "UPDATE supir SET status = 'Sedang Digunakan' WHERE id_supir = ?";
-        $row_update_supir = $koneksi->prepare($sql_update_supir);
-        $row_update_supir->execute([$_POST['id_supir']]);
+        $stmt_update_supir = $koneksi->prepare($sql_update_supir);
+        $stmt_update_supir->execute([$_POST['id_supir']]);
     }
 
-    header('Location: ../bayar.php?id='.$data[0].'&status=bookingsuccess');
+    header('Location: ../bayar.php?id='.$kode_booking.'&status=bookingsuccess');
 }
 
 if($_GET['id'] == 'konfirmasi')
 {
 
-    $data[] = $_POST['id_booking'];
-    $data[] = $_POST['no_rekening'];
-    $data[] = $_POST['nama'];
-    $data[] = $_POST['nominal'];
-    $data[] = $_POST['tgl'];
+    $id_booking = $_POST['id_booking'];
+    $no_rekening = $_POST['no_rekening'];
+    $nama = $_POST['nama'];
+    $nominal = $_POST['nominal'];
+    $tgl = $_POST['tgl'];
 
-    $sql = "INSERT INTO `pembayaran`(`id_booking`, `no_rekening`, `nama_rekening`, `nominal`, `tanggal`) 
+    $sql = "INSERT INTO `pembayaran`(`id_booking`, `no_rekening`, `nama_rekening`, `nominal`, `tanggal`)
     VALUES (?,?,?,?,?)";
-    $row = $koneksi->prepare($sql);
-    $row->execute($data);
+    $stmt = $koneksi->prepare($sql);
+    $stmt->execute([$id_booking, $no_rekening, $nama, $nominal, $tgl]);
 
-    $data2[] = 'Sedang Diproses'; // Changed to 'Sedang Diproses'
-    $data2[] = $_POST['id_booking'];
+    $status = 'Sedang Diproses'; // Changed to 'Sedang Diproses'
     $sql2 = "UPDATE `booking` SET `konfirmasi_pembayaran`=? WHERE id_booking=?";
-    $row2 = $koneksi->prepare($sql2);
-    $row2->execute($data2);
+    $stmt2 = $koneksi->prepare($sql2);
+    $stmt2->execute([$status, $id_booking]);
 
     // Fetch kode_booking for redirect
     $booking_id_for_redirect = $_POST['id_booking'];
     $stmt_kode_booking = $koneksi->prepare("SELECT kode_booking FROM booking WHERE id_booking = ?");
     $stmt_kode_booking->execute([$booking_id_for_redirect]);
-    $booking_info = $stmt_kode_booking->fetch();
-    $kode_booking_value = $booking_info['kode_booking'] ?? '';
+    $result_kode = $stmt_kode_booking->fetch(PDO::FETCH_ASSOC);
+    $kode_booking_value = $result_kode['kode_booking'] ?? '';
 
     header('Location: ../history.php?status=konfirmasisuccess&kode_booking='.$kode_booking_value);
 }
@@ -172,17 +171,18 @@ if($_GET['id'] == 'konfirmasi')
 if($_GET['id'] == 'update_profil')
 {
     $id_login = $_SESSION['USER']['id_login'];
-    $data[] = $_POST['nama_pengguna'];
-    $data[] = $_POST['username'];
-    $data[] = $id_login;
+    $nama_pengguna = $_POST['nama_pengguna'];
+    $username = $_POST['username'];
+    $no_hp = $_POST['no_hp'];
 
-    $sql = "UPDATE login SET nama_pengguna = ?, username = ? WHERE id_login = ?";
-    $row = $koneksi->prepare($sql);
-    $row->execute($data);
+    $sql = "UPDATE login SET nama_pengguna = ?, username = ?, no_hp = ? WHERE id_login = ?";
+    $stmt = $koneksi->prepare($sql);
+    $stmt->execute([$nama_pengguna, $username, $no_hp, $id_login]);
 
     // Update session data
     $_SESSION['USER']['nama_pengguna'] = $_POST['nama_pengguna'];
     $_SESSION['USER']['username'] = $_POST['username'];
+    $_SESSION['USER']['no_hp'] = $_POST['no_hp'];
 
     header('Location: ../profil.php?status=profilesuccess');
 }
@@ -196,9 +196,9 @@ if($_GET['id'] == 'ubah_password')
 
     // Get current user's password from DB
     $sql = "SELECT password FROM login WHERE id_login = ?";
-    $row = $koneksi->prepare($sql);
-    $row->execute(array($id_login));
-    $user = $row->fetch();
+    $stmt = $koneksi->prepare($sql);
+    $stmt->execute([$id_login]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if(md5($current_password) == $user['password'])
     {
@@ -206,8 +206,8 @@ if($_GET['id'] == 'ubah_password')
         {
             $hashed_password = md5($new_password);
             $sql_update = "UPDATE login SET password = ? WHERE id_login = ?";
-            $row_update = $koneksi->prepare($sql_update);
-            $row_update->execute(array($hashed_password, $id_login));
+            $stmt_update = $koneksi->prepare($sql_update);
+            $stmt_update->execute([$hashed_password, $id_login]);
             header('Location: ../profil.php?status=passwordchanged');
         }
         else
@@ -221,32 +221,46 @@ if($_GET['id'] == 'ubah_password')
     }
 }
 
-// Fungsi placeholder untuk mengirim notifikasi WhatsApp
+// Fungsi untuk mengirim notifikasi WhatsApp menggunakan Fonnte API
 function kirim_whatsapp($nomor_hp, $pesan) {
-    // --- INTEGRASI WHATSAPP API DI SINI ---
-    // Ini adalah fungsi placeholder. Anda perlu menggantinya dengan kode
-    // untuk mengintegrasikan dengan layanan API WhatsApp pilihan Anda (misalnya Twilio, Fonnte, dll.).
-    // Contoh:
-    /*
-    $api_url = "https://api.whatsapp.com/send"; // Ganti dengan URL API WhatsApp Anda
-    $token = "YOUR_WHATSAPP_API_TOKEN"; // Ganti dengan token API Anda
+    $token = "YOUR_FONNTE_API_TOKEN"; // Ganti dengan token API Fonnte Anda
+    $api_url = "https://api.fonnte.com/send";
+
+    // Pastikan nomor HP dimulai dengan 62 (format Indonesia)
+    if (substr($nomor_hp, 0, 1) == '0') {
+        $nomor_hp = '62' . substr($nomor_hp, 1);
+    }
 
     $data = [
-        'phone' => $nomor_hp,
+        'target' => $nomor_hp,
         'message' => $pesan,
-        'token' => $token
+        'countryCode' => '62' // Kode negara Indonesia
     ];
 
-    $options = [
-        'http' => [
-            'method'  => 'POST',
-            'header'  => 'Content-type: application/x-www-form-urlencoded',
-            'content' => http_build_query($data)
-        ]
-    ];
-    $context  = stream_context_create($options);
-    $result = file_get_contents($api_url, false, $context);
-    // Anda bisa menambahkan logging di sini untuk melihat hasil pengiriman
-    */
-    error_log("WhatsApp Notifikasi ke " . $nomor_hp . ": " . $pesan); // Contoh logging
+    $curl = curl_init();
+    curl_setopt($curl, CURLOPT_URL, $api_url);
+    curl_setopt($curl, CURLOPT_POST, true);
+    curl_setopt($curl, CURLOPT_POSTFIELDS, http_build_query($data));
+    curl_setopt($curl, CURLOPT_HTTPHEADER, [
+        'Authorization: ' . $token
+    ]);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($curl);
+    $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+    if (curl_errno($curl)) {
+        error_log("Error sending WhatsApp: " . curl_error($curl));
+        return false;
+    }
+
+    curl_close($curl);
+
+    if ($http_code == 200) {
+        error_log("WhatsApp sent successfully to " . $nomor_hp);
+        return true;
+    } else {
+        error_log("Failed to send WhatsApp to " . $nomor_hp . ". Response: " . $response);
+        return false;
+    }
 }

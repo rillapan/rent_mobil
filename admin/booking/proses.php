@@ -14,18 +14,19 @@ if ($_GET['id'] == 'konfirmasi' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     
     // Update status booking
     error_log("Attempting to update id_booking: $id_booking to status: $status");
-    $update_query = $koneksi->query("UPDATE booking SET konfirmasi_pembayaran='$status' WHERE id_booking='$id_booking'");
-    if (!$update_query) { error_log("Error updating booking status: " . print_r($koneksi->errorInfo(), true)); }
-    
-    $affected_rows = $update_query->rowCount();
+    $update_query = mysqli_query($koneksi, "UPDATE booking SET konfirmasi_pembayaran='$status' WHERE id_booking='$id_booking'");
+    if (!$update_query) { error_log("Error updating booking status: " . mysqli_error($koneksi)); }
+
+    $affected_rows = mysqli_affected_rows($koneksi);
     if ($affected_rows === 0) { error_log("No rows affected by update for id_booking: $id_booking with status: $status. Check if id_booking exists or status is already the same."); }
 
     // Ambil data user dan mobil
-    $sql = "SELECT booking.*, mobil.merk 
-            FROM booking 
-            JOIN mobil ON booking.id_mobil = mobil.id_mobil 
+    $sql = "SELECT booking.*, mobil.merk
+            FROM booking
+            JOIN mobil ON booking.id_mobil = mobil.id_mobil
             WHERE booking.id_booking='$id_booking'";
-    $booking = $koneksi->query($sql)->fetch();
+    $result = mysqli_query($koneksi, $sql);
+    $booking = mysqli_fetch_assoc($result);
     $user_id = $booking['id_login'];
     $no_wa = $booking['no_tlp'];
     $customer_name = $booking['nama']; // Get customer name
@@ -86,8 +87,8 @@ if ($_GET['id'] == 'konfirmasi' && $_SERVER['REQUEST_METHOD'] == 'POST') {
 HTML;
 
     // Simpan notifikasi ke database
-    $insert_query = $koneksi->query("INSERT INTO notifikasi (id_login, pesan, status_baca) VALUES ('$user_id', '$pesan', 0)");
-    if (!$insert_query) { error_log("Error inserting notification: " . print_r($koneksi->errorInfo(), true)); }
+    $insert_query = mysqli_query($koneksi, "INSERT INTO notifikasi (id_login, pesan, status_baca) VALUES ('$user_id', '$pesan', 0)");
+    if (!$insert_query) { error_log("Error inserting notification: " . mysqli_error($koneksi)); }
 
     // Kirim WhatsApp (gunakan API WhatsApp Gateway, contoh: https://wa.me/?phone=)
     // Ganti dengan API WhatsApp Gateway yang Anda gunakan

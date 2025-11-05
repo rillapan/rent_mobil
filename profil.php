@@ -90,6 +90,10 @@
                             <label for="username">Username</label>
                             <input type="text" class="form-control" value="<?= $user->username;?>" name="username" id="username" required>
                         </div>
+                        <div class="form-group">
+                            <label for="no_hp">Nomor HP</label>
+                            <input type="text" class="form-control" value="<?= $user->no_hp;?>" name="no_hp" id="no_hp" required>
+                        </div>
                         <button type="submit" class="btn btn-primary-custom btn-block">
                             <i class="fa fa-save mr-2"></i>Simpan Perubahan
                         </button>

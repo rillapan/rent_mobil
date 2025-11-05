@@ -1,0 +1,1 @@
+ALTER TABLE login ADD COLUMN no_hp VARCHAR(15) AFTER level;

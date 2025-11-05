@@ -459,6 +459,10 @@ require 'koneksi/koneksi.php';
                             <label for="password">Password</label>
                             <input type="password" name="pass" id="password" class="form-control" required placeholder="Buat password">
                         </div>
+                        <div class="form-group">
+                            <label for="no_hp">Nomor HP</label>
+                            <input type="text" name="no_hp" id="no_hp" class="form-control" required placeholder="Masukkan nomor HP">
+                        </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
