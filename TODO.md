@@ -1,6 +1,2 @@
-- [x] Add phone number field to login table
-- [x] Update kirim_whatsapp function in koneksi/proses.php to use Fonnte API
-- [x] Add phone number input to registration and profile update forms
-- [x] Trigger WhatsApp notifications on booking confirmation
-- [x] Run SQL to add no_hp column to login table
-- [ ] Test WhatsApp sending functionality
+- [x] Add days late note below 'Terlambat' badge in admin/booking/booking.php
+- [x] Add note "habis hari ini" below 'Habis Hari Ini' badge in admin/booking/booking.php

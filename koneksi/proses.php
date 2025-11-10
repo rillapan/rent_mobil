@@ -36,7 +36,7 @@ if($_GET['id'] == 'login'){
 
         {
 
-            header('Location: ../index.php?status=loginsuccess');
+            header('Location: ../blog.php?status=loginsuccess');
 
         }
 

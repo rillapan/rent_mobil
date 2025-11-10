@@ -3,8 +3,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
 $steps = [
     ['file' => 'booking.php', 'title' => 'Isi Data Diri', 'icon' => 'fas fa-user'],
     ['file' => 'bayar.php', 'title' => 'Konfirmasi Pembayaran', 'icon' => 'fas fa-credit-card'],
-    ['file' => 'konfirmasi.php', 'title' => 'Isi Informasi Pembayaran', 'icon' => 'fas fa-file-invoice-dollar'],
-    ['file' => 'history.php', 'title' => 'Tunggu Pesanan', 'icon' => 'fas fa-check-circle']
+    ['file' => 'konfirmasi.php', 'title' => 'Isi Informasi Pembayaran', 'icon' => 'fas fa-file-invoice-dollar']
 ];
 
 $current_step = 0;

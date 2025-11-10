@@ -198,12 +198,12 @@
         visibility: hidden;
         transition: opacity 0.3s ease;
       }
-      
+
       .login-modal.open {
         opacity: 1;
         visibility: visible;
       }
-      
+
       .login-modal-content {
         background: white;
         border-radius: 12px;
@@ -215,11 +215,11 @@
         transform: translateY(-20px);
         transition: transform 0.3s ease;
       }
-      
+
       .login-modal.open .login-modal-content {
         transform: translateY(0);
       }
-      
+
       .login-modal-close {
         position: absolute;
         right: 15px;
@@ -230,18 +230,18 @@
         color: var(--gray);
         cursor: pointer;
       }
-      
+
       .login-modal-header h4 {
         color: var(--primary);
         font-weight: 600;
       }
-      
+
       .login-modal-form .form-control {
         border-radius: 10px;
         padding: 0.75rem 1rem;
         border: 1px solid #e5e7eb;
       }
-      
+
       .login-modal-form .btn-login {
         background: var(--secondary);
         color: white;
@@ -251,13 +251,150 @@
         font-weight: 600;
         width: 100%;
       }
-      
+
       .login-modal-footer a {
         color: var(--primary);
         text-decoration: none;
         font-weight: 500;
       }
-      
+
+      /* Register Modal */
+      .register-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 3100;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease;
+      }
+
+      .register-modal.open {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .register-modal-content {
+        background: white;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 500px;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 2rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        position: relative;
+        transform: translateY(-20px);
+        transition: transform 0.3s ease;
+      }
+
+      .register-modal.open .register-modal-content {
+        transform: translateY(0);
+      }
+
+      .register-modal-close {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: var(--gray);
+        cursor: pointer;
+      }
+
+      .register-modal-header h4 {
+        color: var(--primary);
+        font-weight: 600;
+      }
+
+      .register-modal-form .form-control {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #e5e7eb;
+      }
+
+      .register-modal-form .btn-register {
+        background: var(--secondary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem;
+        font-weight: 600;
+        width: 100%;
+      }
+
+      .register-modal-footer a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      .password-strength {
+        margin-top: 0.5rem;
+      }
+
+      .strength-meter {
+        height: 4px;
+        background: #e9ecef;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+      }
+
+      .strength-fill {
+        height: 100%;
+        transition: all 0.3s ease;
+      }
+
+      .strength-weak { background: #dc3545; width: 33%; }
+      .strength-medium { background: #ffc107; width: 66%; }
+      .strength-strong { background: #28a745; width: 100%; }
+
+      .strength-text {
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+
+      .strength-text.weak { color: #dc3545; }
+      .strength-text.medium { color: #856404; }
+      .strength-text.strong { color: #28a745; }
+
+      /* Invalid feedback for modals */
+      .is-invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+      }
+
+      .invalid-feedback {
+        display: block;
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+      }
+
+      /* Loading spinner */
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 0.5rem;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
       /* Modern Navigation for desktop */
       .navbar-modern {
         background: white;
@@ -265,6 +402,10 @@
         border-radius: 10px;
         padding: 0.5rem 1rem;
         margin-bottom: 30px;
+        display: block !important;
+        position: sticky;
+        top: 0;
+        z-index: 1020;
       }
       
       .navbar-modern .navbar-nav {
@@ -272,15 +413,16 @@
       }
       
       .navbar-modern .navbar-nav .nav-link {
-        color: var(--dark);
+        color: var(--dark) !important;
         font-weight: 500;
         padding: 0.6rem 0.9rem;
         border-radius: 8px;
         font-size: 0.95rem;
         transition: all 0.3s ease;
         white-space: nowrap;
+        background: transparent !important;
       }
-      
+
       .navbar-modern .navbar-nav .nav-link:hover,
       .navbar-modern .navbar-nav .nav-link.active {
         background: var(--primary);
@@ -359,6 +501,13 @@
             display: flex !important;
             justify-content: space-between;
         }
+        .navbar-modern .navbar-nav {
+            display: flex !important;
+            flex-direction: row !important;
+        }
+        .navbar-modern .nav-item {
+            display: block !important;
+        }
         .sidebar, .sidebar-overlay, .menu-toggle {
             display: none !important;
         }
@@ -369,7 +518,7 @@
   <body>
     <?php
         if(session_status() === PHP_SESSION_NONE) session_start();
-        $url = str_replace('index.php', '', (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[PHP_SELF]");
+        $url = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/';
 
         // Ambil data info website
         $sql_web = "SELECT * FROM infoweb WHERE id = 1";
@@ -395,7 +544,9 @@
         <button class="sidebar-close" id="sidebarClose" aria-label="Tutup Sidebar"><i class="fas fa-times"></i></button>
       </div>
       <ul class="sidebar-nav">
+        <?php if(empty($_SESSION['USER'])){?>
         <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'index.php' ? ' active' : '' ?>" href="index.php"><i class="fas fa-home"></i> Home</a></li>
+        <?php }?>
         <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'blog.php' ? ' active' : '' ?>" href="blog.php"><i class="fas fa-car"></i> Daftar Mobil</a></li>
         <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'supir.php' ? ' active' : '' ?>" href="supir.php"><i class="fas fa-user"></i> Supir</a></li>
         <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'kontak.php' ? ' active' : '' ?>" href="kontak.php"><i class="fas fa-phone"></i> Kontak Kami</a></li>
@@ -439,7 +590,49 @@
           <button type="submit" class="btn btn-login"><i class="fas fa-sign-in-alt"></i> Login</button>
         </form>
         <div class="login-modal-footer text-center mt-4 pt-3 border-top">
-          <p>Belum punya akun? <a href="#" data-toggle="modal" data-target="#modelId" id="registerLink">Daftar sekarang</a></p>
+          <p>Belum punya akun? <a href="#" id="registerLink">Daftar sekarang</a></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="register-modal" id="registerModal">
+      <div class="register-modal-content">
+        <button class="register-modal-close" id="registerModalClose"><i class="fas fa-times"></i></button>
+        <div class="register-modal-header text-center mb-4">
+          <h4><i class="fas fa-user-plus"></i> Daftar Akun Baru</h4>
+        </div>
+        <form class="register-modal-form" method="post" action="koneksi/proses.php?id=daftar">
+          <div class="form-group mb-3">
+            <label for="registerNama">Nama Lengkap</label>
+            <input type="text" class="form-control" id="registerNama" name="nama" placeholder="Masukkan nama lengkap" required>
+          </div>
+          <div class="form-group mb-3">
+            <label for="registerUsername">Username</label>
+            <input type="text" class="form-control" id="registerUsername" name="user" placeholder="Masukkan username" required>
+          </div>
+          <div class="form-group mb-3">
+            <label for="registerNoHp">Nomor HP</label>
+            <input type="tel" class="form-control" id="registerNoHp" name="no_hp" placeholder="Masukkan nomor HP" required>
+          </div>
+          <div class="form-group mb-3">
+            <label for="registerPassword">Password</label>
+            <input type="password" class="form-control" id="registerPassword" name="pass" placeholder="Masukkan password" required>
+            <div class="password-strength" id="registerPasswordStrength" style="display: none;">
+              <div class="strength-meter">
+                <div class="strength-fill" id="registerStrengthFill"></div>
+              </div>
+              <div class="strength-text" id="registerStrengthText">Kekuatan password</div>
+            </div>
+          </div>
+          <div class="form-group mb-4">
+            <label for="registerConfirmPassword">Konfirmasi Password</label>
+            <input type="password" class="form-control" id="registerConfirmPassword" placeholder="Ulangi password" required>
+          </div>
+          <button type="submit" class="btn btn-register"><i class="fas fa-user-plus"></i> Daftar Sekarang</button>
+        </form>
+        <div class="register-modal-footer text-center mt-4 pt-3 border-top">
+          <p>Sudah punya akun? <a href="#" id="loginLink">Login di sini</a></p>
         </div>
       </div>
     </div>
@@ -474,12 +667,14 @@
       </div>
     </header>
 
-    <div class="container">
-      <!-- Modern Navigation for desktop -->
-      <nav class="navbar navbar-expand-lg navbar-light navbar-modern">
-        <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+    <!-- Modern Navigation for desktop -->
+    <nav class="navbar navbar-expand-lg navbar-light navbar-modern">
+      <div class="container">
+        <div class="collapse navbar-collapse show" id="navbarTogglerDemo01">
           <ul class="navbar-nav mr-auto">
+            <?php if(empty($_SESSION['USER'])){?>
             <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'index.php' ? ' active' : '' ?>" href="index.php"><i class="fas fa-home"></i> Home</a></li>
+            <?php }?>
             <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'blog.php' ? ' active' : '' ?>" href="blog.php"><i class="fas fa-car"></i> Daftar Mobil</a></li>
             <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'supir.php' ? ' active' : '' ?>" href="supir.php"><i class="fas fa-user"></i> Supir</a></li>
             <li class="nav-item"><a class="nav-link<?= basename($_SERVER['PHP_SELF']) == 'kontak.php' ? ' active' : '' ?>" href="kontak.php"><i class="fas fa-phone"></i> Kontak Kami</a></li>
@@ -497,8 +692,8 @@
 
 
         </div>
-      </nav>
-    </div>
+      </div>
+    </nav>
 
     <!-- Main content -->
     <div class="container">
@@ -545,30 +740,176 @@
         const sidebarLoginBtn = document.getElementById('sidebarLoginBtn');
         const desktopLoginBtn = document.getElementById('desktopLoginBtn');
         const registerLink = document.getElementById('registerLink');
-        
+
+        // Register Modal functionality
+        const registerModal = document.getElementById('registerModal');
+        const registerModalClose = document.getElementById('registerModalClose');
+        const loginLink = document.getElementById('loginLink');
+
         function openLoginModal(e) {
             e.preventDefault();
             loginModal.classList.add('open');
             document.body.style.overflow = 'hidden';
             closeSidebar();
         }
-        
+
         function closeLoginModal() {
             loginModal.classList.remove('open');
             document.body.style.overflow = 'auto';
         }
-        
+
+        function openRegisterModal(e) {
+            e.preventDefault();
+            registerModal.classList.add('open');
+            document.body.style.overflow = 'hidden';
+            closeSidebar();
+            closeLoginModal();
+        }
+
+        function closeRegisterModal() {
+            registerModal.classList.remove('open');
+            document.body.style.overflow = 'auto';
+        }
+
         if (sidebarLoginBtn) sidebarLoginBtn.addEventListener('click', openLoginModal);
         if (desktopLoginBtn) desktopLoginBtn.addEventListener('click', openLoginModal);
         if (loginModalClose) loginModalClose.addEventListener('click', closeLoginModal);
-        
+
         loginModal.addEventListener('click', (e) => { if (e.target === loginModal) closeLoginModal(); });
-        
-        if (registerLink) {
-            registerLink.addEventListener('click', function(e) {
+
+        if (registerLink) registerLink.addEventListener('click', openRegisterModal);
+
+        if (registerModalClose) registerModalClose.addEventListener('click', closeRegisterModal);
+        registerModal.addEventListener('click', (e) => { if (e.target === registerModal) closeRegisterModal(); });
+
+        if (loginLink) {
+            loginLink.addEventListener('click', function(e) {
                 e.preventDefault();
-                closeLoginModal();
-                $('#modelId').modal('show');
+                closeRegisterModal();
+                openLoginModal(e);
+            });
+        }
+
+        // Password strength checker for register modal
+        const registerPassword = document.getElementById('registerPassword');
+        const registerPasswordStrength = document.getElementById('registerPasswordStrength');
+        const registerStrengthFill = document.getElementById('registerStrengthFill');
+        const registerStrengthText = document.getElementById('registerStrengthText');
+
+        if (registerPassword) {
+            registerPassword.addEventListener('input', function() {
+                const password = this.value;
+                if (password.length === 0) {
+                    registerPasswordStrength.style.display = 'none';
+                    return;
+                }
+
+                registerPasswordStrength.style.display = 'block';
+
+                let strength = 0;
+                let feedback = [];
+
+                // Length check
+                if (password.length >= 6) strength += 1;
+                else feedback.push('minimal 6 karakter');
+
+                // Lowercase check
+                if (/[a-z]/.test(password)) strength += 1;
+                else feedback.push('huruf kecil');
+
+                // Uppercase check
+                if (/[A-Z]/.test(password)) strength += 1;
+                else feedback.push('huruf besar');
+
+                // Number check
+                if (/\d/.test(password)) strength += 1;
+                else feedback.push('angka');
+
+                // Special character check
+                if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+
+                // Update UI based on strength
+                registerStrengthFill.className = 'strength-fill';
+                registerStrengthText.className = 'strength-text';
+
+                if (strength <= 2) {
+                    registerStrengthFill.classList.add('strength-weak');
+                    registerStrengthText.classList.add('weak');
+                    registerStrengthText.textContent = 'Lemah - ' + feedback.join(', ');
+                } else if (strength <= 4) {
+                    registerStrengthFill.classList.add('strength-medium');
+                    registerStrengthText.classList.add('medium');
+                    registerStrengthText.textContent = 'Sedang - Tambahkan variasi karakter';
+                } else {
+                    registerStrengthFill.classList.add('strength-strong');
+                    registerStrengthText.classList.add('strong');
+                    registerStrengthText.textContent = 'Kuat - Password aman!';
+                }
+            });
+        }
+
+        // Form validation for register modal
+        const registerForm = document.querySelector('.register-modal-form');
+        if (registerForm) {
+            registerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const nama = document.getElementById('registerNama').value.trim();
+                const user = document.getElementById('registerUsername').value.trim();
+                const noHp = document.getElementById('registerNoHp').value.trim();
+                const pass = document.getElementById('registerPassword').value;
+                const confirmPass = document.getElementById('registerConfirmPassword').value;
+
+                // Reset validation
+                document.querySelectorAll('.register-modal-form .form-control').forEach(el => {
+                    el.classList.remove('is-invalid');
+                });
+
+                let isValid = true;
+
+                // Validate nama
+                if (nama.length < 2) {
+                    document.getElementById('registerNama').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                // Validate username
+                if (user.length < 3) {
+                    document.getElementById('registerUsername').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                // Validate phone number
+                const phoneRegex = /^(\+62|62|0)[8-9][0-9]{7,11}$/;
+                if (!phoneRegex.test(noHp.replace(/\s/g, ''))) {
+                    document.getElementById('registerNoHp').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                // Validate password
+                if (pass.length < 6) {
+                    document.getElementById('registerPassword').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                // Validate password confirmation
+                if (pass !== confirmPass) {
+                    document.getElementById('registerConfirmPassword').classList.add('is-invalid');
+                    isValid = false;
+                }
+
+                if (!isValid) {
+                    return false;
+                }
+
+                // Show loading state
+                const submitBtn = registerForm.querySelector('.btn-register');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="loading"></span>Mendaftarkan...';
+
+                // Submit form
+                this.submit();
             });
         }
         

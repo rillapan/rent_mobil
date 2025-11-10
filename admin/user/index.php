@@ -29,20 +29,21 @@
                         <?php
                             $no = 1;
                             $sql = "SELECT * FROM login WHERE level = 'Pengguna' ORDER BY id_login DESC";
-                            $result = mysqli_query($koneksi, $sql);
-                            $hasil = mysqli_fetch_all($result, MYSQLI_ASSOC);
+                            $stmt = $koneksi->prepare($sql);
+                            $stmt->execute();
+                            $hasil = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             foreach($hasil as $r){
                         ?>
                         <tr>
-                            <td><?= $no;?></td>    
-                            <td><?= htmlspecialchars($r->nama_pengguna);?></td>        
-                            <td><?= htmlspecialchars($r->username);?></td>        
+                            <td><?= $no;?></td>
+                            <td><?= htmlspecialchars($r['nama_pengguna']);?></td>
+                            <td><?= htmlspecialchars($r['username']);?></td>
                             <td class="text-center">
-                                <a href="<?php echo $url;?>admin/booking/booking.php?id=<?= $r->id_login;?>" 
+                                <a href="<?php echo $url;?>admin/booking/booking.php?id=<?= $r['id_login'];?>"
                                    class="btn btn-secondary btn-sm" title="Lihat Detail Transaksi">
                                     <i class="fa fa-info-circle"></i> Detail Transaksi
                                 </a>
-                                </td>    
+                                </td>
                         </tr>
                         <?php $no++; }?>
                     </tbody>

@@ -200,7 +200,7 @@
 <div class="row">
     <div class="col-sm-12">
         <h4 class="card-title-custom">
-        <?php 
+        <?php
             if(isset($_GET['cari']))
             {
                 echo 'Keyword Pencarian : ' . htmlspecialchars($cari);
@@ -209,6 +209,41 @@
             }
         ?>
         </h4>
+
+        <!-- Search Form -->
+        <div class="row mt-3 mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <form method="GET" action="blog.php" class="d-flex flex-column flex-md-row gap-3">
+                            <div class="flex-grow-1">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text bg-primary text-white border-0">
+                                            <i class="fas fa-search"></i>
+                                        </span>
+                                    </div>
+                                    <input type="text" name="cari" class="form-control form-control-lg border-0"
+                                           placeholder="Cari mobil berdasarkan merk..."
+                                           value="<?php echo isset($_GET['cari']) ? htmlspecialchars($_GET['cari']) : ''; ?>">
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary-custom btn-lg px-4">
+                                    <i class="fas fa-search mr-2"></i>Cari
+                                </button>
+                                <?php if(isset($_GET['cari'])): ?>
+                                <a href="blog.php" class="btn btn-outline-secondary btn-lg px-4">
+                                    <i class="fas fa-times mr-2"></i>Hapus Pencarian
+                                </a>
+                                <?php endif; ?>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row mt-3">
         <?php 
             $no =1;

@@ -11,13 +11,12 @@
     }
 
     $kode_booking = htmlspecialchars($_GET['id']);
-    
+
     // Mengambil data booking menggunakan prepared statement untuk keamanan
-    $stmt_booking = mysqli_prepare($koneksi, "SELECT * FROM booking WHERE kode_booking = ?");
-    mysqli_stmt_bind_param($stmt_booking, "s", $kode_booking);
-    mysqli_stmt_execute($stmt_booking);
-    $result_booking = mysqli_stmt_get_result($stmt_booking);
-    $hasil = mysqli_fetch_assoc($result_booking);
+    $stmt_booking = $koneksi->prepare("SELECT * FROM booking WHERE kode_booking = ?");
+    $stmt_booking->bindParam(1, $kode_booking);
+    $stmt_booking->execute();
+    $hasil = $stmt_booking->fetch(PDO::FETCH_ASSOC);
 
     if (!$hasil) {
         echo '<script>alert("Data booking tidak ditemukan."); window.location="peminjaman.php"</script>';
@@ -26,20 +25,19 @@
 
     // Mengambil data pembayaran
     $id_booking = $hasil['id_booking'];
-    $stmt_pembayaran = mysqli_prepare($koneksi, "SELECT * FROM pembayaran WHERE id_booking = ?");
-    mysqli_stmt_bind_param($stmt_pembayaran, "s", $id_booking);
-    mysqli_stmt_execute($stmt_pembayaran);
-    $result_pembayaran = mysqli_stmt_get_result($stmt_pembayaran);
-    $hsl = mysqli_fetch_assoc($result_pembayaran);
-    $c = mysqli_num_rows($result_pembayaran);
+    $stmt_pembayaran = $koneksi->prepare("SELECT * FROM pembayaran WHERE id_booking = ?");
+    $stmt_pembayaran->bindParam(1, $id_booking);
+    $stmt_pembayaran->execute();
+    $result_pembayaran = $stmt_pembayaran->fetchAll(PDO::FETCH_ASSOC);
+    $c = count($result_pembayaran);
+    $hsl = $c > 0 ? $result_pembayaran[0] : null;
 
     // Mengambil data mobil
     $id_mobil = $hasil['id_mobil'];
-    $stmt_mobil = mysqli_prepare($koneksi, "SELECT * FROM mobil WHERE id_mobil = ?");
-    mysqli_stmt_bind_param($stmt_mobil, "s", $id_mobil);
-    mysqli_stmt_execute($stmt_mobil);
-    $result_mobil = mysqli_stmt_get_result($stmt_mobil);
-    $isi = mysqli_fetch_assoc($result_mobil);
+    $stmt_mobil = $koneksi->prepare("SELECT * FROM mobil WHERE id_mobil = ?");
+    $stmt_mobil->bindParam(1, $id_mobil);
+    $stmt_mobil->execute();
+    $isi = $stmt_mobil->fetch(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>

@@ -2,14 +2,15 @@
 
     session_start();
     require 'koneksi/koneksi.php';
-    include 'header.php';
-    include 'progress_bar.php';
     if(empty($_SESSION['USER']))
     {
         echo '<script>alert("Harap Login");window.location="index.php"</script>';
         exit();
     }
     $id_login = $_SESSION['USER']['id_login'];
+
+    include 'header.php';
+
     $hasil = $koneksi->prepare("SELECT mobil.merk, booking.*, supir.nama_supir, supir.harga_sewa as harga_supir FROM booking JOIN mobil ON
     booking.id_mobil=mobil.id_mobil LEFT JOIN supir ON booking.id_supir=supir.id_supir WHERE booking.id_login = ? ORDER BY id_booking DESC");
     $hasil->execute(array($id_login));

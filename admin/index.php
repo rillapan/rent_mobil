@@ -2,7 +2,7 @@
 
     require '../koneksi/koneksi.php';
     $title_web = 'Dashboard';
-    $url = '../';
+    $url = (isset($_SERVER['HTTPS']) ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/../';
     include 'header.php';
 
     // Ambil data info website

@@ -4,9 +4,11 @@
     }
     if(empty($_SESSION['USER'])){
         echo '<script>alert("Login Dulu !");window.location="../index.php";</script>';
+        exit();
     }else{
         if($_SESSION['USER']['level'] != 'admin'){
             echo '<script>alert("Login Khusus Admin !");window.location="../index.php";</script>';
+            exit();
         }
     }
  
