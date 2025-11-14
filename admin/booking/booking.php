@@ -24,16 +24,19 @@ if (!empty($filter_sewa) && $filter_sewa != 'Semua') {
     
     switch($filter_sewa) {
         case 'Disewa':
-            $sewa_condition = 'mobil.status = "Tersedia" AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) > CURDATE()';
+            $sewa_condition = 'booking.tanggal <= CURDATE() AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) > CURDATE()';
             break;
         case 'Selesai':
-            $sewa_condition = 'mobil.status = "Tersedia" AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) <= CURDATE()';
+            $sewa_condition = 'DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) <= CURDATE()';
             break;
         case 'Masa Sewa Habis':
-            $sewa_condition = 'mobil.status = "Tidak Tersedia" AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) = CURDATE()';
+            $sewa_condition = 'DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) = CURDATE()';
             break;
         case 'Terlambat Pengembalian':
-            $sewa_condition = 'mobil.status = "Tidak Tersedia" AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) < CURDATE()';
+            $sewa_condition = 'DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) < CURDATE() AND booking.status_pengembalian != "Dikembalikan"';
+            break;
+        case 'Dibatalkan':
+            $sewa_condition = 'booking.konfirmasi_pembayaran = "Refund Diterima / Uang Dikembalikan"';
             break;
     }
     
@@ -57,10 +60,12 @@ if(!empty($_GET['id'])){
 }
 
 // Query dengan prepared statement
-$sql = "SELECT mobil.merk, mobil.status AS status_mobil, booking.*, 
-               DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) AS tanggal_akhir 
-        FROM booking 
-        JOIN mobil ON booking.id_mobil = mobil.id_mobil" . $where_clause . " 
+$sql = "SELECT mobil.merk, mobil.status AS status_mobil, booking.*,
+               DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) AS tanggal_akhir,
+               supir.nama_supir
+        FROM booking
+        JOIN mobil ON booking.id_mobil = mobil.id_mobil
+        LEFT JOIN supir ON booking.id_supir = supir.id_supir" . $where_clause . "
         ORDER BY id_booking DESC";
 
 try {
@@ -90,8 +95,6 @@ try {
     $sql_pembayaran = "SELECT 
         COUNT(CASE WHEN konfirmasi_pembayaran = 'Pembayaran Diterima' THEN 1 END) as pembayaran_diterima,
         COUNT(CASE WHEN konfirmasi_pembayaran = 'Sedang Diproses' THEN 1 END) as sedang_diproses,
-        COUNT(CASE WHEN konfirmasi_pembayaran = 'Sudah Dibayar' THEN 1 END) as sudah_dibayar,
-        COUNT(CASE WHEN konfirmasi_pembayaran = 'Belum Dibayar' THEN 1 END) as belum_dibayar,
         COUNT(*) as total_booking
         FROM booking 
         JOIN mobil ON booking.id_mobil = mobil.id_mobil";
@@ -101,12 +104,13 @@ try {
     $stats_pembayaran = $stmt_pembayaran->fetch(PDO::FETCH_ASSOC);
     
     // Query untuk mendapatkan jumlah data per status sewa
-    $sql_sewa = "SELECT 
+    $sql_sewa = "SELECT
         COUNT(CASE WHEN mobil.status = 'Tersedia' AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) > CURDATE() THEN 1 END) as disewa,
         COUNT(CASE WHEN mobil.status = 'Tersedia' AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) <= CURDATE() THEN 1 END) as selesai,
         COUNT(CASE WHEN mobil.status = 'Tidak Tersedia' AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) = CURDATE() THEN 1 END) as masa_sewa_habis,
-        COUNT(CASE WHEN mobil.status = 'Tidak Tersedia' AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) < CURDATE() THEN 1 END) as terlambat_pengembalian
-        FROM booking 
+        COUNT(CASE WHEN mobil.status = 'Tidak Tersedia' AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) < CURDATE() THEN 1 END) as terlambat_pengembalian,
+        COUNT(CASE WHEN booking.konfirmasi_pembayaran = 'Refund Diterima / Uang Dikembalikan' THEN 1 END) as dibatalkan
+        FROM booking
         JOIN mobil ON booking.id_mobil = mobil.id_mobil";
     
     $stmt_sewa = $koneksi->prepare($sql_sewa);
@@ -117,6 +121,38 @@ try {
     echo "<div class='alert alert-danger'>Error: " . $e->getMessage() . "</div>";
     $stats_pembayaran = [];
     $stats_sewa = [];
+}
+
+// Logika otomatis update status supir ketika sewa selesai
+try {
+    // Cari booking yang sudah selesai (tanggal akhir <= hari ini) dan supir masih 'Sedang Digunakan'
+    $sql_check_selesai = "SELECT b.id_booking, b.kode_booking, b.id_supir, s.status AS status_supir
+                         FROM booking b
+                         JOIN supir s ON b.id_supir = s.id_supir
+                         WHERE b.id_supir IS NOT NULL
+                         AND s.status = 'Sedang Digunakan'
+                         AND DATE_ADD(b.tanggal, INTERVAL b.lama_sewa DAY) <= CURDATE()
+                         AND (b.status_pengembalian IS NULL OR b.status_pengembalian = '' OR b.status_pengembalian = 'Belum Dikembalikan')
+                         AND b.konfirmasi_pembayaran != 'Refund Diterima / Uang Dikembalikan'";
+
+    $stmt_check = $koneksi->prepare($sql_check_selesai);
+    $stmt_check->execute();
+    $bookings_selesai = $stmt_check->fetchAll(PDO::FETCH_ASSOC);
+
+    // Update status supir menjadi 'Tersedia' untuk booking yang sudah selesai
+    if (!empty($bookings_selesai)) {
+        foreach ($bookings_selesai as $booking) {
+            $sql_update_supir = "UPDATE supir SET status = 'Tersedia' WHERE id_supir = ?";
+            $stmt_update = $koneksi->prepare($sql_update_supir);
+            $stmt_update->execute([$booking['id_supir']]);
+
+            // Log untuk debugging (opsional, bisa dihapus nanti)
+            error_log("Auto-updated supir ID {$booking['id_supir']} to 'Tersedia' for booking {$booking['kode_booking']}");
+        }
+    }
+} catch (PDOException $e) {
+    // Log error tapi jangan tampilkan ke user
+    error_log("Error in auto-update supir status: " . $e->getMessage());
 }
 ?>
 
@@ -167,45 +203,6 @@ try {
             </div>
         </div>
         
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-start border-info border-4 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <div class="text-xs fw-bold text-info text-uppercase mb-1">
-                                Sudah Dibayar
-                            </div>
-                            <div class="h5 mb-0 fw-bold text-gray-800">
-                                <?= $stats_pembayaran['sudah_dibayar'] ?? 0 ?>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-info-circle fa-2x text-info"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-xl-3 col-md-6 mb-3">
-            <div class="card border-start border-danger border-4 shadow-sm h-100">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <div class="text-xs fw-bold text-danger text-uppercase mb-1">
-                                Belum Dibayar
-                            </div>
-                            <div class="h5 mb-0 fw-bold text-gray-800">
-                                <?= $stats_pembayaran['belum_dibayar'] ?? 0 ?>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-times-circle fa-2x text-danger"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Card Informasi Status Sewa -->
@@ -292,6 +289,26 @@ try {
                 </div>
             </div>
         </div>
+
+        <div class="col-xl-3 col-md-6 mb-3">
+            <div class="card border-start border-dark border-4 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="text-xs fw-bold text-dark text-uppercase mb-1">
+                                Dibatalkan
+                            </div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">
+                                <?= $stats_sewa['dibatalkan'] ?? 0 ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-ban fa-2x text-dark"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Total Booking Card -->
@@ -322,8 +339,6 @@ try {
                                 <option value="">Semua Status</option>
                                 <option value="Pembayaran Diterima" <?= (isset($_GET['status']) && $_GET['status'] == 'Pembayaran Diterima') ? 'selected' : ''; ?>>Pembayaran Diterima</option>
                                 <option value="Sedang Diproses" <?= (isset($_GET['status']) && $_GET['status'] == 'Sedang Diproses') ? 'selected' : ''; ?>>Sedang Diproses</option>
-                                <option value="Sudah Dibayar" <?= (isset($_GET['status']) && $_GET['status'] == 'Sudah Dibayar') ? 'selected' : ''; ?>>Sudah Dibayar</option>
-                                <option value="Belum Dibayar" <?= (isset($_GET['status']) && $_GET['status'] == 'Belum Dibayar') ? 'selected' : ''; ?>>Belum Dibayar</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -336,6 +351,7 @@ try {
                                 <option value="Selesai" <?= (isset($_GET['sewa']) && $_GET['sewa'] == 'Selesai') ? 'selected' : ''; ?>>Selesai</option>
                                 <option value="Masa Sewa Habis" <?= (isset($_GET['sewa']) && $_GET['sewa'] == 'Masa Sewa Habis') ? 'selected' : ''; ?>>Masa Sewa Habis</option>
                                 <option value="Terlambat Pengembalian" <?= (isset($_GET['sewa']) && $_GET['sewa'] == 'Terlambat Pengembalian') ? 'selected' : ''; ?>>Terlambat Pengembalian</option>
+                                <option value="Dibatalkan" <?= (isset($_GET['sewa']) && $_GET['sewa'] == 'Dibatalkan') ? 'selected' : ''; ?>>Dibatalkan</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -365,6 +381,7 @@ try {
                             <th scope="col" class="text-center">No.</th>
                             <th scope="col">Kode Booking</th>
                             <th scope="col">Merk Mobil</th>
+                            <th scope="col">Supir</th>
                             <th scope="col">Nama</th>
                             <th scope="col">Tanggal Sewa</th>
                             <th scope="col" class="text-center">Lama Sewa</th>
@@ -383,6 +400,13 @@ try {
                                 <span class="fw-bold text-primary"><?= htmlspecialchars($isi['kode_booking']); ?></span>
                             </td>
                             <td class="align-middle"><?= htmlspecialchars($isi['merk']); ?></td>
+                            <td class="align-middle">
+                                <?php if (!empty($isi['id_supir']) && !empty($isi['nama_supir'])): ?>
+                                    <span class="fw-bold"><?= htmlspecialchars($isi['nama_supir']); ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">Tidak ada supir</span>
+                                <?php endif; ?>
+                            </td>
                             <td class="align-middle"><?= htmlspecialchars($isi['nama']); ?></td>
                             <td class="align-middle"><?= date('d/m/Y', strtotime($isi['tanggal'])); ?></td>
                             <td class="text-center align-middle">
@@ -393,27 +417,59 @@ try {
                             <td class="align-middle fw-bold">Rp<?= number_format(htmlspecialchars($isi['total_harga']), 0, ',', '.'); ?></td>
                             <td class="text-center align-middle">
                                 <?php
-                                $status_mobil = $isi['status_mobil'];
-                                $tanggal_akhir = strtotime($isi['tanggal_akhir']);
-                                $sekarang = strtotime(date('Y-m-d'));
-                                $days_late = 0;
-
-                                if ($status_mobil == 'Tersedia') {
-                                    if ($tanggal_akhir <= $sekarang) {
-                                        echo '<span class="badge bg-secondary text-white"><i class="fas fa-stop-circle me-1"></i> Selesai</span>';
-                                    } else {
-                                        echo '<span class="badge bg-info text-white"><i class="fas fa-calendar-check me-1"></i> Disewa</span>';
+                                if (!empty($filter_sewa)) {
+                                    switch($filter_sewa) {
+                                        case 'Disewa':
+                                            echo '<span class="badge bg-info text-white"><i class="fas fa-calendar-check me-1"></i> Disewa</span>';
+                                            break;
+                                        case 'Selesai':
+                                            echo '<span class="badge bg-secondary text-white"><i class="fas fa-stop-circle me-1"></i> Selesai</span>';
+                                            break;
+                                        case 'Masa Sewa Habis':
+                                            echo '<span class="badge bg-warning text-white"><i class="fas fa-clock me-1"></i> Masa Sewa Habis</span>';
+                                            echo '<br><small class="text-muted">masa sewa habis hari ini</small>';
+                                            break;
+                                        case 'Terlambat Pengembalian':
+                                            $tanggal_akhir = strtotime($isi['tanggal_akhir']);
+                                            $sekarang = strtotime(date('Y-m-d'));
+                                            $days_late = floor(($sekarang - $tanggal_akhir) / 86400);
+                                            echo '<span class="badge bg-danger text-white"><i class="fas fa-exclamation-triangle me-1"></i> Terlambat</span>';
+                                            echo '<br><small class="text-muted">melewati batas pengembalian selama ' . $days_late . ' hari</small>';
+                                            break;
+                                        case 'Dibatalkan':
+                                            echo '<span class="badge bg-dark text-white"><i class="fas fa-ban me-1"></i> Dibatalkan</span>';
+                                            break;
                                     }
-                                } elseif ($status_mobil == 'Tidak Tersedia') {
-                                    if ($tanggal_akhir > $sekarang) {
-                                        echo '<span class="badge bg-success text-white"><i class="fas fa-play-circle me-1"></i> Aktif</span>';
-                                    } elseif ($tanggal_akhir == $sekarang) {
-                                        echo '<span class="badge bg-warning text-white"><i class="fas fa-clock me-1"></i> Habis Hari Ini</span>';
-                                        echo '<br><small class="text-muted">habis hari ini</small>';
-                                    } else {
-                                        $days_late = floor(($sekarang - $tanggal_akhir) / 86400);
-                                        echo '<span class="badge bg-danger text-white"><i class="fas fa-exclamation-triangle me-1"></i> Terlambat</span>';
-                                        echo '<br><small class="text-muted">melewati batas pengembalian selama ' . $days_late . ' hari</small>';
+                                } else {
+                                    $status_mobil = $isi['status_mobil'];
+                                    $tanggal_akhir = strtotime($isi['tanggal_akhir']);
+                                    $sekarang = strtotime(date('Y-m-d'));
+                                    $days_late = 0;
+                                    $status_pengembalian = $isi['status_pengembalian'] ?? 'Belum Dikembalikan';
+                                    $konfirmasi_pembayaran = $isi['konfirmasi_pembayaran'];
+
+                                    // Jika dibatalkan (refund diterima), tampilkan 'Dibatalkan'
+                                    if ($konfirmasi_pembayaran == 'Refund Diterima / Uang Dikembalikan') {
+                                        echo '<span class="badge bg-dark text-white"><i class="fas fa-ban me-1"></i> Dibatalkan</span>';
+                                    } elseif ($status_pengembalian == 'Dikembalikan') {
+                                        echo '<span class="badge bg-secondary text-white"><i class="fas fa-stop-circle me-1"></i> Selesai</span>';
+                                    } elseif ($status_mobil == 'Tersedia') {
+                                        if ($tanggal_akhir <= $sekarang) {
+                                            echo '<span class="badge bg-secondary text-white"><i class="fas fa-stop-circle me-1"></i> Selesai</span>';
+                                        } else {
+                                            echo '<span class="badge bg-info text-white"><i class="fas fa-calendar-check me-1"></i> Disewa</span>';
+                                        }
+                                    } elseif ($status_mobil == 'Tidak Tersedia') {
+                                        if ($tanggal_akhir > $sekarang) {
+                                            echo '<span class="badge bg-success text-white"><i class="fas fa-play-circle me-1"></i> Aktif</span>';
+                                        } elseif ($tanggal_akhir == $sekarang) {
+                                            echo '<span class="badge bg-warning text-white"><i class="fas fa-clock me-1"></i> Masa Sewa Habis</span>';
+                                            echo '<br><small class="text-muted">masa sewa habis hari ini</small>';
+                                        } else {
+                                            $days_late = floor(($sekarang - $tanggal_akhir) / 86400);
+                                            echo '<span class="badge bg-danger text-white"><i class="fas fa-exclamation-triangle me-1"></i> Terlambat</span>';
+                                            echo '<br><small class="text-muted">melewati batas pengembalian selama ' . $days_late . ' hari</small>';
+                                        }
                                     }
                                 }
                                 ?>
@@ -424,14 +480,11 @@ try {
                                 $badge_class = [
                                     'Pembayaran Diterima' => 'bg-success',
                                     'Sedang Diproses' => 'bg-warning',
-                                    'Sudah Dibayar' => 'bg-info',
-                                    'Belum Dibayar' => 'bg-danger'
                                 ];
                                 $badge_icon = [
                                     'Pembayaran Diterima' => 'fa-check-circle',
                                     'Sedang Diproses' => 'fa-hourglass-half',
-                                    'Sudah Dibayar' => 'fa-info-circle',
-                                    'Belum Dibayar' => 'fa-times-circle'
+                                   
                                 ];
                                 ?>
                                 <span class="badge <?= $badge_class[$status_bayar] ?? 'bg-secondary'; ?> text-white">
@@ -474,7 +527,7 @@ try {
     }
 
     .container {
-        max-width: 1200px;
+        max-width: 1500px;
     }
     
     .btn-secondary {

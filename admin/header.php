@@ -185,6 +185,7 @@
         box-shadow: 2px 0 12px rgba(0,0,0,0.15);
         overflow-y: auto;
       }
+      .sidebar.open { left: 0; }
       .sidebar.open {
         left: 0;
       }
@@ -268,13 +269,12 @@
       }
       
       @media (min-width: 993px) {
-        .mobile-menu-btn {
-          display: none !important;
-        }
-        
-        .sidebar, .sidebar-overlay {
-          display: none !important;
-        }
+        .mobile-menu-btn { display: none !important; }
+        .sidebar { top: 0; }
+        .sidebar-overlay { display: none !important; }
+        .desktop-nav { display: none !important; }
+        body.sidebar-open { margin-left: 280px; }
+        body.sidebar-open .modern-header { padding-left: 280px; }
       }
       
       @media (max-width: 768px) {
@@ -301,13 +301,16 @@
       }
     </style>
   </head>
-  <body>
+  <body class="sidebar-open">
     <!-- Modern Header -->
    <header class="modern-header">
   <div class="container">
     <div class="row align-items-center">
       <div class="col-4 col-md-4 d-flex align-items-center">
         <button class="mobile-menu-btn d-block d-md-none" id="mobileMenuBtn" style="background:transparent;border:none;font-size:2rem;color:#fff;">
+          <i class="fas fa-bars"></i>
+        </button>
+        <button class="d-none d-md-inline-flex align-items-center justify-content-center" id="desktopSidebarToggle" style="background:transparent;border:none;font-size:1.6rem;color:#fff;margin-right:10px;">
           <i class="fas fa-bars"></i>
         </button>
         <h4 class="d-none d-md-block text-light mb-0"><b>Admin Panel</b></h4>
@@ -320,7 +323,7 @@
 </header>
 
     <!-- Sidebar for mobile -->
-    <div class="sidebar" id="sidebar">
+    <div class="sidebar open" id="sidebar">
       <div class="sidebar-header d-flex align-items-center justify-content-between p-3">
         <h5 class="brand-name mb-0 sidebar-brand-name"><b><?= $info_web->nama_rental; ?></b> <span>RENTAL</span></h5>
         <button class="close-sidebar" id="closeSidebar" aria-label="Close Sidebar">
@@ -340,7 +343,12 @@
         </li>
         <li class="nav-item">
           <a class="nav-link <?php if($title_web == 'Daftar Mobil' || $title_web == 'Tambah Mobil' || $title_web == 'Edit Mobil'){ echo 'active';}?>" href="<?php echo $url;?>admin/mobil/mobil.php">
-            <i class="fas fa-car"></i> Daftar Mobil
+            <i class="fas fa-car"></i> Management Mobil
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link <?php if($title_web == 'Daftar Supir' || $title_web == 'Tambah Supir' || $title_web == 'Edit Supir'){ echo 'active';}?>" href="<?php echo $url;?>admin/supir/supir.php">
+            <i class="fas fa-user-tie"></i> Management Supir
           </a>
         </li>
         <li class="nav-item">
@@ -353,13 +361,24 @@
             <i class="fas fa-key"></i> Peminjaman
           </a>
         </li>
+
         <li class="nav-item">
-          <a class="nav-link <?php if($title_web == 'Daftar Supir' || $title_web == 'Tambah Supir' || $title_web == 'Edit Supir'){ echo 'active';}?>" href="<?php echo $url;?>admin/supir/supir.php">
-            <i class="fas fa-user-tie"></i> Management Supir
+          <a class="nav-link <?php if($title_web == 'Pengajuan Refund'){ echo 'active';}?>" href="<?php echo $url;?>admin/refund/index.php">
+            <i class="fas fa-undo"></i> Pengajuan Refund
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="#">
+          <a class="nav-link <?php if($title_web == 'Laporan Transaksi'){ echo 'active';}?>" href="<?php echo $url;?>admin/laporan/index.php">
+            <i class="fas fa-chart-pie"></i> Laporan Transaksi
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link <?php if($title_web == 'Pengaturan Website'){ echo 'active';}?>" href="<?php echo $url;?>admin/pengaturan/index.php">
+            <i class="fas fa-cog"></i> Info Website
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="<?php echo $url;?>admin/profil/index.php">
             <i class="fas fa-user"></i> Hallo, <?php echo $hasil_login['nama_pengguna'];?>
           </a>
         </li>
@@ -384,7 +403,10 @@
               <a class="nav-link" href="<?php echo $url;?>admin/user/index.php">User / Pelanggan</a>
             </li>
             <li class="nav-item <?php if($title_web == 'Daftar Mobil' || $title_web == 'Tambah Mobil' || $title_web == 'Edit Mobil'){ echo 'active';}?>">
-              <a class="nav-link" href="<?php echo $url;?>admin/mobil/mobil.php">Daftar Mobil</a>
+              <a class="nav-link" href="<?php echo $url;?>admin/mobil/mobil.php">Management Mobil</a>
+            </li>
+            <li class="nav-item <?php if($title_web == 'Daftar Supir' || $title_web == 'Tambah Supir' || $title_web == 'Edit Supir'){ echo 'active';}?>">
+              <a class="nav-link" href="<?php echo $url;?>admin/supir/supir.php">Management Supir</a>
             </li>
             <li class="nav-item <?php if($title_web == 'Daftar Booking' || $title_web == 'Konfirmasi'){ echo 'active';}?>">
               <a class="nav-link" href="<?php echo $url;?>admin/booking/booking.php">Daftar Booking</a>
@@ -392,13 +414,19 @@
             <li class="nav-item <?php if($title_web == 'Peminjaman'){ echo 'active';}?>">
               <a class="nav-link" href="<?php echo $url;?>admin/peminjaman/peminjaman.php">Peminjaman</a>
             </li>
-            <li class="nav-item <?php if($title_web == 'Daftar Supir' || $title_web == 'Tambah Supir' || $title_web == 'Edit Supir'){ echo 'active';}?>">
-              <a class="nav-link" href="<?php echo $url;?>admin/supir/supir.php">Management Supir</a>
+            <li class="nav-item <?php if($title_web == 'Pengajuan Refund'){ echo 'active';}?>">
+              <a class="nav-link" href="<?php echo $url;?>admin/refund/index.php">Pengajuan Refund</a>
+            </li>
+            <li class="nav-item <?php if($title_web == 'Pengaturan Website'){ echo 'active';}?>">
+              <a class="nav-link" href="<?php echo $url;?>admin/pengaturan/index.php">Info Website</a>
+            </li>
+            <li class="nav-item <?php if($title_web == 'Laporan Transaksi'){ echo 'active';}?>">
+              <a class="nav-link" href="<?php echo $url;?>admin/laporan/index.php">Laporan Transaksi</a>
             </li>
           </ul>
           <ul class="navbar-nav my-2 my-lg-0">
             <li class="nav-item">
-              <a class="nav-link" href="#">
+              <a class="nav-link" href="<?php echo $url;?>admin/profil/index.php">
                 <i class="fas fa-user"></i> Hallo, <?php echo $hasil_login['nama_pengguna'];?>
               </a>
             </li>
@@ -430,12 +458,23 @@
       document.getElementById('closeSidebar').addEventListener('click', function() {
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('sidebarOverlay').classList.remove('open');
+        document.body.classList.remove('sidebar-open');
       });
       
       document.getElementById('sidebarOverlay').addEventListener('click', function() {
         document.getElementById('sidebar').classList.remove('open');
         this.classList.remove('open');
+        document.body.classList.remove('sidebar-open');
       });
+
+      const desktopToggle = document.getElementById('desktopSidebarToggle');
+      if (desktopToggle) {
+        desktopToggle.addEventListener('click', function() {
+          const sidebar = document.getElementById('sidebar');
+          const isOpen = sidebar.classList.toggle('open');
+          document.body.classList.toggle('sidebar-open', isOpen);
+        });
+      }
       
       // Logout confirmation for both desktop and mobile
       const logoutLinks = document.querySelectorAll('#logout-link, #logout-link-sidebar');

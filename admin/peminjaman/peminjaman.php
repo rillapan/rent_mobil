@@ -1,5 +1,4 @@
 <?php
-
     require '../../koneksi/koneksi.php';
     $title_web = 'Peminjaman';
     $url = '../../';
@@ -20,8 +19,7 @@
 
         $id = $hasil['id_mobil'];
         $isi = $koneksi->query("SELECT * FROM mobil WHERE id_mobil = '$id'")->fetch();
-    }
-    
+    } // Add closing brace here for the if(!empty($_GET['id'])) block
 ?>
 <br>
 <br>
@@ -152,6 +150,30 @@
                                         </select>
                                     </td>
                                 </tr>
+                                <tr>
+                                    <th scope="row">Status Pengembalian</th>
+                                    <td>:</td>
+                                    <td>
+                                        <select class="form-select" name="status_pengembalian">
+                                            <option value="Belum Dikembalikan" <?= ($hasil['status_pengembalian'] ?? 'Belum Dikembalikan') == 'Belum Dikembalikan' ? 'selected' : '';?>>Belum Dikembalikan</option>
+                                            <option value="Dikembalikan" <?= ($hasil['status_pengembalian'] ?? 'Belum Dikembalikan') == 'Dikembalikan' ? 'selected' : '';?>>Dikembalikan</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr id="pengembalian_fields" style="display: none;">
+                                    <th scope="row">Tanggal Pengembalian</th>
+                                    <td>:</td>
+                                    <td>
+                                        <input type="date" class="form-control" name="tanggal_pengembalian" value="<?= date('Y-m-d'); ?>">
+                                    </td>
+                                </tr>
+                                <tr id="denda_fields" style="display: none;">
+                                    <th scope="row">Denda (jika ada)</th>
+                                    <td>:</td>
+                                    <td>
+                                        <input type="number" class="form-control" name="denda" placeholder="0" min="0">
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                         <input type="hidden" name="id_mobil" value="<?= htmlspecialchars($isi['id_mobil']);?>">
@@ -165,15 +187,79 @@
                 </div>
             </div>
         </div>
-        
-        <?php } ?>
-        
+        <?php } // Add this closing brace ?>
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusPengembalianSelect = document.querySelector('select[name="status_pengembalian"]');
+    const pengembalianFields = document.getElementById('pengembalian_fields');
+    const dendaFields = document.getElementById('denda_fields');
+
+    function togglePengembalianFields() {
+        if (statusPengembalianSelect.value === 'Dikembalikan') {
+            pengembalianFields.style.display = 'table-row';
+            dendaFields.style.display = 'table-row';
+        } else {
+            pengembalianFields.style.display = 'none';
+            dendaFields.style.display = 'none';
+        }
+    }
+
+    statusPengembalianSelect.addEventListener('change', togglePengembalianFields);
+    togglePengembalianFields(); // Initial check
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');
+    const bookingId = urlParams.get('id');
+
+    if (status) {
+        let title, text, icon;
+        switch (status) {
+            case 'notfound':
+                title = 'Gagal!';
+                text = 'Kode Booking tidak ditemukan atau tidak ada datanya.';
+                icon = 'error';
+                break;
+            case 'update_success':
+                title = 'Berhasil!';
+                text = 'Status mobil telah berhasil diperbarui.';
+                icon = 'success';
+                break;
+            case 'pengembalian_success':
+                title = 'Berhasil!';
+                text = 'Mobil telah berhasil dikembalikan.';
+                icon = 'success';
+                break;
+            case 'update_error':
+                title = 'Gagal!';
+                text = 'Terjadi kesalahan saat memperbarui status mobil.';
+                icon = 'error';
+                break;
+        }
+
+        if (title) {
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: icon,
+                confirmButtonText: 'OK'
+            }).then(() => {
+                // Build the new URL, keeping the ID if it exists
+                let newUrl = 'peminjaman.php';
+                if (bookingId && status !== 'notfound') {
+                    newUrl += '?id=' + bookingId;
+                }
+                window.history.replaceState({}, document.title, newUrl);
+            });
+        }
+    }
+});
+</script>
 <style>
     :root {
-        --primary: #1A237E; 
+        --primary: #1A237E;
         --secondary: #FF6B35;
         --light: #F8F9FA;
         --dark: #212529;
@@ -195,48 +281,4 @@
 <br>
 <br>
 <br>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const status = urlParams.get('status');
-        const bookingId = urlParams.get('id');
-
-        if (status) {
-            let title, text, icon;
-            switch (status) {
-                case 'notfound':
-                    title = 'Gagal!';
-                    text = 'Kode Booking tidak ditemukan atau tidak ada datanya.';
-                    icon = 'error';
-                    break;
-                case 'update_success':
-                    title = 'Berhasil!';
-                    text = 'Status mobil telah berhasil diperbarui.';
-                    icon = 'success';
-                    break;
-                case 'update_error':
-                    title = 'Gagal!';
-                    text = 'Terjadi kesalahan saat memperbarui status mobil.';
-                    icon = 'error';
-                    break;
-            }
-
-            if (title) {
-                Swal.fire({
-                    title: title,
-                    text: text,
-                    icon: icon,
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    // Build the new URL, keeping the ID if it exists
-                    let newUrl = 'peminjaman.php';
-                    if (bookingId && status !== 'notfound') {
-                        newUrl += '?id=' + bookingId;
-                    }
-                    window.history.replaceState({}, document.title, newUrl);
-                });
-            }
-        }
-    });
-</script>
 <?php  include '../footer.php';?>

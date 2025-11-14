@@ -85,6 +85,37 @@
             color: white;
         }
     </style>
+    <script>
+        function toggleRejectionForm() {
+            const statusSelect = document.getElementById('statusSelect');
+            const rejectionForm = document.getElementById('rejectionForm');
+            const pesanPenolakan = document.getElementById('pesanPenolakan');
+            
+            if (statusSelect.value === 'Pembayaran Ditolak') {
+                rejectionForm.style.display = 'block';
+                pesanPenolakan.setAttribute('required', 'required');
+            } else {
+                rejectionForm.style.display = 'none';
+                pesanPenolakan.removeAttribute('required');
+                pesanPenolakan.value = '';
+                document.getElementById('quickMessageSelect').value = '';
+            }
+        }
+        
+        function fillQuickMessage() {
+            const quickSelect = document.getElementById('quickMessageSelect');
+            const textarea = document.getElementById('pesanPenolakan');
+            
+            if (quickSelect.value) {
+                textarea.value = quickSelect.value;
+            }
+        }
+        
+        // Check on page load if status is already "Pembayaran Ditolak"
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleRejectionForm();
+        });
+    </script>
 </head>
 <body>
 
@@ -207,17 +238,40 @@
                                     <tr>
                                         <td class="fw-bold">Status Konfirmasi</td>
                                         <td>
-                                            <select class="form-select" name="status">
+                                            <select class="form-select" name="status" id="statusSelect" onchange="toggleRejectionForm()">
                                                 <option value="Sedang Diproses" <?= ($hasil['konfirmasi_pembayaran'] == 'Sedang Diproses') ? 'selected' : ''; ?>>Sedang Diproses</option>
                                                 <option value="Pembayaran Diterima" <?= ($hasil['konfirmasi_pembayaran'] == 'Pembayaran Diterima') ? 'selected' : ''; ?>>Pembayaran Diterima</option>
-                                                <option value="Sudah Dibayar" <?= ($hasil['konfirmasi_pembayaran'] == 'Sudah Dibayar') ? 'selected' : ''; ?>>Sudah Dibayar</option>
-                                                <option value="Belum Dibayar" <?= ($hasil['konfirmasi_pembayaran'] == 'Belum Dibayar') ? 'selected' : ''; ?>>Belum Dibayar</option>
+                                                <option value="Pembayaran Ditolak" <?= ($hasil['konfirmasi_pembayaran'] == 'Pembayaran Ditolak') ? 'selected' : ''; ?>>Pembayaran Ditolak</option>
                                             </select>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
+                        
+                        <!-- Form Pesan Penolakan (muncul saat memilih Pembayaran Ditolak) -->
+                        <div id="rejectionForm" style="display: none; margin-top: 20px; padding: 20px; background-color: #fff3cd; border-radius: 8px; border-left: 4px solid #ffc107;">
+                            <h6 class="mb-3"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Pesan Penolakan Pembayaran</h6>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Pilih Pesan Cepat:</label>
+                                <select class="form-select" id="quickMessageSelect" onchange="fillQuickMessage()">
+                                    <option value="">-- Pilih Pesan Cepat --</option>
+                                    <option value="Pembayaran tidak masuk ke rekening">Pembayaran tidak masuk ke rekening</option>
+                                    <option value="Jumlah nominal yang dibayarkan kurang">Jumlah nominal yang dibayarkan kurang</option>
+                                    <option value="Bukti transfer tidak jelas atau tidak valid">Bukti transfer tidak jelas atau tidak valid</option>
+                                    <option value="Data pembayaran tidak sesuai dengan pesanan">Data pembayaran tidak sesuai dengan pesanan</option>
+                                    <option value="Pembayaran melebihi batas waktu yang ditentukan">Pembayaran melebihi batas waktu yang ditentukan</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Atau Tulis Pesan Manual:</label>
+                                <textarea class="form-control" name="pesan_penolakan" id="pesanPenolakan" rows="4" placeholder="Tuliskan alasan penolakan pembayaran secara detail..." required></textarea>
+                                <small class="text-muted">Pesan ini akan dikirim ke pelanggan melalui notifikasi.</small>
+                            </div>
+                        </div>
+                        
                         <input type="hidden" name="id_booking" value="<?= htmlspecialchars($hasil['id_booking']); ?>">
                         <button type="submit" class="btn btn-secondary float-end mt-3">
                             <i class="fas fa-save me-2"></i> Ubah Status

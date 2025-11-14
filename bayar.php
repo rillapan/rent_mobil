@@ -209,10 +209,6 @@
                                     <span class="badge bg-success text-white"><i class="fas fa-check-circle me-1"></i> Pembayaran Diterima</span>
                                 <?php } elseif($hasil['konfirmasi_pembayaran'] == 'Sedang Diproses'){ ?>
                                     <span class="badge bg-warning text-white"><i class="fas fa-hourglass-half me-1"></i> Sedang Diproses</span>
-                                <?php } elseif($hasil['konfirmasi_pembayaran'] == 'Sudah Dibayar'){ ?>
-                                    <span class="badge bg-info text-white"><i class="fas fa-check-circle me-1"></i> Sudah Dibayar</span>
-                                <?php } elseif($hasil['konfirmasi_pembayaran'] == 'Belum Dibayar'){ ?>
-                                    <span class="badge bg-danger text-white"><i class="fas fa-times-circle me-1"></i> Belum Dibayar</span>
                                 <?php } else { ?>
                                     <span class="badge bg-secondary text-white"><i class="fas fa-question-circle me-1"></i> <?php echo htmlspecialchars($hasil['konfirmasi_pembayaran']); ?></span>
                                 <?php } ?>

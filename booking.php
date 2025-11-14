@@ -408,13 +408,13 @@
                                         <p class="mb-2">Tambah supir untuk perjalanan Anda</p>
                                         <div id="supir_info" class="alert alert-success mt-2" style="display:none;">
                                             <i class="fas fa-check-circle me-2"></i>
-                                            <strong>Supir dipilih:</strong> 
-                                            <span id="nama_supir"></span> - 
+                                            <strong>Supir dipilih:</strong>
+                                            <span id="nama_supir"></span> -
                                             Rp<span id="harga_supir_display"></span>/hari
                                         </div>
                                     </div>
                                     <div class="mt-2 mt-md-0">
-                                        <a href="supir.php?id=<?= $isi['id_mobil']; ?>" class="btn btn-primary me-2">
+                                        <a href="supir.php?id=<?= $isi['id_mobil']; ?>" class="btn btn-primary me-2" id="pilih_supir_link">
                                             <i class="fas fa-user me-1"></i> Pilih Supir
                                         </a>
                                         <button type="button" id="hapus_supir" class="btn btn-outline-secondary" style="display:none;">
@@ -474,8 +474,55 @@
             // Set minimum date to today
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('tanggal').min = today;
-            
-            // Cek apakah ada supir yang dipilih dari sessionStorage
+
+            // Function to save form data to sessionStorage
+            function saveFormData() {
+                const formData = {
+                    ktp: document.getElementById('ktp').value,
+                    nama: document.getElementById('nama').value,
+                    alamat: document.getElementById('alamat').value,
+                    no_tlp: document.getElementById('no_tlp').value,
+                    tanggal: document.getElementById('tanggal').value,
+                    lama_sewa: document.getElementById('lama_sewa').value,
+                    harga_supir: document.getElementById('harga_supir').value,
+                    id_supir: document.getElementById('id_supir').value,
+                    nama_supir: document.getElementById('nama_supir').textContent,
+                    harga_supir_display: document.getElementById('harga_supir_display').textContent
+                };
+                sessionStorage.setItem('bookingFormData', JSON.stringify(formData));
+            }
+
+            // Function to restore form data from sessionStorage
+            function restoreFormData() {
+                const savedData = sessionStorage.getItem('bookingFormData');
+                if (savedData) {
+                    const formData = JSON.parse(savedData);
+                    document.getElementById('ktp').value = formData.ktp || '';
+                    document.getElementById('nama').value = formData.nama || '';
+                    document.getElementById('alamat').value = formData.alamat || '';
+                    document.getElementById('no_tlp').value = formData.no_tlp || '';
+                    document.getElementById('tanggal').value = formData.tanggal || '';
+                    document.getElementById('lama_sewa').value = formData.lama_sewa || '1';
+                    document.getElementById('harga_supir').value = formData.harga_supir || '0';
+                    document.getElementById('id_supir').value = formData.id_supir || '';
+
+                    // Restore driver info if exists
+                    if (formData.id_supir && formData.nama_supir) {
+                        document.getElementById('nama_supir').textContent = formData.nama_supir;
+                        document.getElementById('harga_supir_display').textContent = formData.harga_supir_display;
+                        document.getElementById('supir_info').style.display = 'block';
+                        document.getElementById('hapus_supir').style.display = 'inline-block';
+                    }
+
+                    // Clear the saved data after restoring
+                    sessionStorage.removeItem('bookingFormData');
+                }
+            }
+
+            // Restore form data on page load
+            restoreFormData();
+
+            // Cek apakah ada supir yang dipilih dari sessionStorage (from supir.php)
             const selectedSupir = sessionStorage.getItem('selectedSupir');
             if (selectedSupir) {
                 const supir = JSON.parse(selectedSupir);
@@ -489,6 +536,11 @@
                 sessionStorage.removeItem('selectedSupir'); // Hapus dari sessionStorage setelah digunakan
             }
 
+            // Event listener untuk link pilih supir - save form data before navigating
+            document.getElementById('pilih_supir_link').addEventListener('click', function(e) {
+                saveFormData();
+            });
+
             // Event listener untuk tombol hapus supir
             document.getElementById('hapus_supir').addEventListener('click', function() {
                 document.getElementById('id_supir').value = '';
@@ -501,15 +553,20 @@
             // Event listener untuk perubahan lama sewa
             document.getElementById('lama_sewa').addEventListener('input', updateTotalHarga);
 
+            // Event listener untuk form submission - clear sessionStorage
+            document.getElementById('bookingForm').addEventListener('submit', function() {
+                sessionStorage.removeItem('bookingFormData');
+            });
+
             function updateTotalHarga() {
                 const hargaMobil = parseInt('<?= $isi['harga']; ?>');
                 const hargaSupir = parseInt(document.getElementById('harga_supir').value) || 0;
                 const lamaSewa = parseInt(document.getElementById('lama_sewa').value) || 1;
                 const total = (hargaMobil + hargaSupir) * lamaSewa;
-                
+
                 document.getElementById('total_harga_display').textContent = 'Rp' + total.toLocaleString();
                 document.getElementById('total_harga').value = total;
-                
+
                 // Update detail harga
                 let detailText = `Mobil: Rp${hargaMobil.toLocaleString()}/hari`;
                 if (hargaSupir > 0) {
@@ -517,7 +574,7 @@
                 }
                 document.getElementById('detail_harga').textContent = detailText;
             }
-            
+
             // Initialize total harga
             updateTotalHarga();
         });

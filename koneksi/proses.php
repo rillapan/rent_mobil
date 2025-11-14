@@ -264,3 +264,173 @@ function kirim_whatsapp($nomor_hp, $pesan) {
         return false;
     }
 }
+
+if($_GET['id'] == 'ajukan_refund')
+{
+    if(empty($_SESSION['USER'])) {
+        header('Location: ../index.php?status=loginfailed');
+        exit();
+    }
+
+    $kode_booking = $_POST['kode_booking'];
+    $alasan_refund = $_POST['alasan_refund'];
+    $no_rekening_refund = $_POST['no_rekening_refund'];
+    $nama_rekening_refund = $_POST['nama_rekening_refund'];
+    $id_login = $_SESSION['USER']['id_login'];
+
+    // Ambil data booking
+    $stmt_booking = $koneksi->prepare("SELECT * FROM booking WHERE kode_booking = ? AND id_login = ?");
+    $stmt_booking->execute([$kode_booking, $id_login]);
+    $booking = $stmt_booking->fetch(PDO::FETCH_ASSOC);
+
+    if(!$booking) {
+        header('Location: ../notifikasi.php?status=refundfailed');
+        exit();
+    }
+
+    // Ambil informasi penolakan pembayaran (jika ada)
+    $stmt_penolakan = $koneksi->prepare("SELECT reason FROM booking_rejections WHERE id_booking = ?");
+    $stmt_penolakan->execute([$booking['id_booking']]);
+    $data_penolakan = $stmt_penolakan->fetch(PDO::FETCH_ASSOC);
+    $alasan_penolakan = $data_penolakan['reason'] ?? '-';
+
+    // Ambil informasi pengguna
+    $stmt_user = $koneksi->prepare("SELECT nama_pengguna, no_hp FROM login WHERE id_login = ?");
+    $stmt_user->execute([$booking['id_login']]);
+    $user_data = $stmt_user->fetch(PDO::FETCH_ASSOC);
+    $nama_pengguna = $user_data['nama_pengguna'] ?? $booking['nama'];
+    $no_hp_user = $user_data['no_hp'] ?? $booking['no_tlp'];
+
+    // Simpan atau perbarui data refund request
+    $koneksi->exec("CREATE TABLE IF NOT EXISTS refund_requests (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        id_booking INT NOT NULL,
+        kode_booking VARCHAR(255) NOT NULL,
+        id_login INT NOT NULL,
+        nama_pelanggan VARCHAR(255) NOT NULL,
+        no_hp VARCHAR(50),
+        metode_pembayaran VARCHAR(100),
+        alasan_penolakan TEXT,
+        alasan_refund TEXT,
+        no_rekening_refund VARCHAR(100),
+        nama_rekening_refund VARCHAR(150),
+        catatan_admin TEXT,
+        status VARCHAR(50) DEFAULT 'Menunggu Refund',
+        nominal_refund DECIMAL(15,2) DEFAULT NULL,
+        total_pembayaran DECIMAL(15,2) DEFAULT 0,
+        tanggal_pesanan DATE DEFAULT NULL,
+        processed_at DATETIME DEFAULT NULL,
+        admin_id INT DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uniq_refund_booking (id_booking)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $total_pembayaran_decimal = number_format($booking['total_harga'], 2, '.', '');
+    $tanggal_pesanan = null;
+    if (!empty($booking['tanggal'])) {
+        $timestamp_tanggal = strtotime($booking['tanggal']);
+        if ($timestamp_tanggal) {
+            $tanggal_pesanan = date('Y-m-d', $timestamp_tanggal);
+        }
+    }
+
+    $stmt_refund = $koneksi->prepare("INSERT INTO refund_requests 
+        (id_booking, kode_booking, id_login, nama_pelanggan, no_hp, metode_pembayaran, alasan_penolakan, alasan_refund, no_rekening_refund, nama_rekening_refund, status, total_pembayaran, tanggal_pesanan)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Menunggu Refund', ?, ?)
+        ON DUPLICATE KEY UPDATE 
+            nama_pelanggan = VALUES(nama_pelanggan),
+            no_hp = VALUES(no_hp),
+            metode_pembayaran = VALUES(metode_pembayaran),
+            alasan_penolakan = VALUES(alasan_penolakan),
+            alasan_refund = VALUES(alasan_refund),
+            no_rekening_refund = VALUES(no_rekening_refund),
+            nama_rekening_refund = VALUES(nama_rekening_refund),
+            status = 'Menunggu Refund',
+            total_pembayaran = VALUES(total_pembayaran),
+            tanggal_pesanan = VALUES(tanggal_pesanan),
+            catatan_admin = NULL,
+            nominal_refund = NULL,
+            processed_at = NULL,
+            admin_id = NULL");
+    $stmt_refund->execute([
+        $booking['id_booking'],
+        $kode_booking,
+        $booking['id_login'],
+        $nama_pengguna,
+        $no_hp_user,
+        'Transfer Bank',
+        $alasan_penolakan,
+        $alasan_refund,
+        $no_rekening_refund,
+        $nama_rekening_refund,
+        $total_pembayaran_decimal,
+        $tanggal_pesanan
+    ]);
+
+    // Siapkan data untuk notifikasi admin
+    $total_harga_formatted = number_format($booking['total_harga'], 0, ',', '.');
+    $pesan_refund = <<<HTML
+<div style="font-family: Arial, sans-serif; line-height: 1.6;">
+    <h4 style="color: #e74c3c; margin-bottom: 10px;">
+        <i class="fas fa-undo" style="color: #e74c3c;"></i> &nbsp; <strong>Permintaan Refund</strong>
+    </h4>
+    <p style="margin-bottom: 20px;">Pelanggan mengajukan refund untuk booking berikut:</p>
+    
+    <div style="background-color: #f8f9fa; border-left: 4px solid #e74c3c; padding: 15px; margin-bottom: 20px;">
+        <h5 style="color: #2c3e50; margin-top: 0; margin-bottom: 10px;">
+            <i class="fas fa-receipt" style="color: #FF6B35;"></i> <strong style="color: #333;">Detail Booking</strong>
+        </h5>
+        <p style="margin: 5px 0;"><strong>Kode Booking :</strong> {$kode_booking}</p>
+        <p style="margin: 5px 0;"><strong>Nama :</strong> {$booking['nama']}</p>
+        <p style="margin: 5px 0;"><strong>Total Harga :</strong> Rp {$total_harga_formatted}</p>
+        <p style="margin: 5px 0;"><strong>Alasan Penolakan :</strong> {$alasan_penolakan}</p>
+        <p style="margin: 5px 0;"><strong>Metode Pembayaran :</strong> Transfer Bank</p>
+    </div>
+    
+    <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px;">
+        <h5 style="color: #2c3e50; margin-top: 0; margin-bottom: 10px;">
+            <i class="fas fa-info-circle" style="color: #ffc107;"></i> <strong style="color: #333;">Detail Refund</strong>
+        </h5>
+        <p style="margin: 5px 0;"><strong>Alasan Refund :</strong> {$alasan_refund}</p>
+        <p style="margin: 5px 0;"><strong>No. Rekening :</strong> {$no_rekening_refund}</p>
+        <p style="margin: 5px 0;"><strong>Nama Pemilik Rekening :</strong> {$nama_rekening_refund}</p>
+    </div>
+    
+    <p style="color: #666; font-size: 0.9em;">Silakan proses refund ini segera.</p>
+</div>
+HTML;
+
+    // Simpan notifikasi untuk admin (level admin)
+    // Ambil semua admin
+    $stmt_admin = $koneksi->prepare("SELECT id_login FROM login WHERE level = 'admin'");
+    $stmt_admin->execute();
+    $admins = $stmt_admin->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach($admins as $admin) {
+        $stmt_notif = $koneksi->prepare("INSERT INTO notifikasi (id_login, id_booking, pesan, status_baca) VALUES (?, ?, ?, 0)");
+        $stmt_notif->execute([$admin['id_login'], $booking['id_booking'], $pesan_refund]);
+    }
+
+    // Kirim notifikasi konfirmasi ke user
+    $pesan_konfirmasi = <<<HTML
+<div style="font-family: Arial, sans-serif; line-height: 1.6;">
+    <h4 style="color: #3498db; margin-bottom: 10px;">
+        <i class="fas fa-check-circle" style="color: #3498db;"></i> &nbsp; <strong>Permintaan Refund Diterima</strong>
+    </h4>
+    <p style="margin-bottom: 20px;">Terima kasih! Permintaan refund Anda untuk booking <strong>{$kode_booking}</strong> telah kami terima.</p>
+    <p style="margin-bottom: 20px;">Tim admin akan memproses refund Anda dalam 1-3 hari kerja. Kami akan menghubungi Anda melalui notifikasi atau kontak yang terdaftar.</p>
+    <p style="color: #666; font-size: 0.9em;">Jika ada pertanyaan, silakan hubungi customer support kami.</p>
+</div>
+HTML;
+
+    $stmt_notif_user = $koneksi->prepare("INSERT INTO notifikasi (id_login, id_booking, pesan, status_baca) VALUES (?, ?, ?, 0)");
+    $stmt_notif_user->execute([$id_login, $booking['id_booking'], $pesan_konfirmasi]);
+
+    // Update status booking menjadi "Menunggu Refund" atau status khusus
+    $status_refund = 'Menunggu Refund';
+    $stmt_update = $koneksi->prepare("UPDATE booking SET konfirmasi_pembayaran = ? WHERE id_booking = ?");
+    $stmt_update->execute([$status_refund, $booking['id_booking']]);
+
+    header('Location: ../notifikasi.php?status=refundsuccess');
+}

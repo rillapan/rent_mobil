@@ -145,9 +145,7 @@
                                         <span class="badge bg-success float-end"><i class="fas fa-check-circle me-1"></i> Pembayaran Diterima</span>
                                     <?php } elseif($booking_data['konfirmasi_pembayaran'] == 'Sedang Diproses'){ ?>
                                         <span class="badge bg-warning float-end"><i class="fas fa-hourglass-half me-1"></i> Diproses</span>
-                                    <?php } elseif($booking_data['konfirmasi_pembayaran'] == 'Sudah Dibayar'){ ?>
-                                        <span class="badge bg-info float-end"><i class="fas fa-info-circle me-1"></i> Selesai</span>
-                                    <?php } else { ?>
+                                    <?php }else { ?>
                                         <span class="badge bg-danger float-end"><i class="fas fa-times-circle me-1"></i> Belum Dibayar</span>
                                     <?php } ?>
                                 </li>

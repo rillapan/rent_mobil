@@ -101,14 +101,18 @@
                                 </td>
                                 <td class="align-middle">Rp. <?= number_format(htmlspecialchars($isi['total_harga']));?></td>
                                 <td class="text-center align-middle">
-                                    <?php if($isi['konfirmasi_pembayaran'] == 'Pembayaran Diterima'){ ?>
-                                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Terbayarkan</span>
-                                    <?php } elseif($isi['konfirmasi_pembayaran'] == 'Sedang Diproses'){ ?>
-                                        <span class="badge bg-warning"><i class="fas fa-hourglass-half me-1"></i> Diproses</span>
-                                    <?php } elseif($isi['konfirmasi_pembayaran'] == 'Sudah Dibayar'){ ?>
-                                        <span class="badge bg-info"><i class="fas fa-info-circle me-1"></i> Selesai</span>
+                                    <?php 
+                                        $konfirmasi = $isi['konfirmasi_pembayaran'];
+                                        if($konfirmasi == 'Pembayaran Diterima' || $konfirmasi == 'Sudah Dibayar'){ ?>
+                                            <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Terbayarkan</span>
+                                    <?php } elseif($konfirmasi == 'Sedang Diproses'){ ?>
+                                            <span class="badge bg-warning"><i class="fas fa-hourglass-half me-1"></i> Diproses</span>
+                                    <?php } elseif($konfirmasi == 'Refund Diterima / Uang Dikembalikan'){ ?>
+                                            <span class="badge bg-dark"><i class="fas fa-ban me-1"></i> Dibatalkan</span>
+                                    <?php } elseif($konfirmasi == 'Pembayaran Ditolak'){ ?>
+                                            <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i> Pembayaran Ditolak</span>
                                     <?php } else { ?>
-                                        <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i> Belum Dibayar</span>
+                                            <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i> Belum Dibayar</span>
                                     <?php } ?>
                                 </td>
                                 <td class="text-center align-middle">

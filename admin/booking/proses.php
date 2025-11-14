@@ -11,6 +11,13 @@ if(empty($_SESSION['USER'])) {
 if ($_GET['id'] == 'konfirmasi' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     $id_booking = $_POST['id_booking'];
     $status = $_POST['status'];
+    $pesan_penolakan = isset($_POST['pesan_penolakan']) ? trim($_POST['pesan_penolakan']) : '';
+    
+    // Validasi pesan penolakan jika status adalah Pembayaran Ditolak
+    if ($status == 'Pembayaran Ditolak' && empty($pesan_penolakan)) {
+        echo '<script>alert("Pesan penolakan wajib diisi untuk status Pembayaran Ditolak.");window.history.back();</script>';
+        exit();
+    }
     
     // Update status booking
     error_log("Attempting to update id_booking: $id_booking to status: $status");
@@ -18,6 +25,8 @@ if ($_GET['id'] == 'konfirmasi' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     $update_query->bindParam(1, $status);
     $update_query->bindParam(2, $id_booking);
     $update_query->execute();
+
+    // Tidak ada kolom 'status_sewa' pada tabel booking; cukup simpan 'Pembayaran Ditolak' di konfirmasi_pembayaran
 
     $affected_rows = $update_query->rowCount();
     if ($affected_rows === 0) { error_log("No rows affected by update for id_booking: $id_booking with status: $status. Check if id_booking exists or status is already the same."); }
@@ -54,16 +63,26 @@ if ($_GET['id'] == 'konfirmasi' && $_SERVER['REQUEST_METHOD'] == 'POST') {
         $message = 'Pesananmu sedang kami proses ✅ Tim kami sedang menyiapkan mobil impianmu. Tunggu sebentar ya, kami akan segera menghubungi kamu untuk langkah berikutnya.';
         $icon = 'fa-cogs';
         $color = '#f39c12';
-    } elseif ($status == 'Sudah Dibayar') {
-        $title = 'Selesai';
-        $message = 'Selamat 🎉 Pembayaranmu lunas! Sekarang, mobil impianmu sudah resmi di tanganmu. Terima kasih sudah memilih layanan kami. Selamat jalan-jalan! 🚘✨.';
-        $icon = 'fa-car';
-        $color = '#3498db';
-    } elseif ($status == 'Belum Dibayar') {
-        $title = 'Belum Dibayar';
-        $message = 'Ups, jangan sampai kehabisan! 🚨 Pesananmu belum selesai, nih. Segera lakukan pembayaranmu agar mobil impianmu enggak diambil orang lain ya 😉.';
-        $icon = 'fa-exclamation-triangle';
+    } elseif ($status == 'Pembayaran Ditolak') {
+        $title = 'Pembayaran Ditolak';
+        $message = 'Maaf, pembayaran Anda ditolak. ' . htmlspecialchars($pesan_penolakan) . ' Silakan hubungi customer support atau lakukan pembayaran ulang dengan benar.';
+        $icon = 'fa-times-circle';
         $color = '#e74c3c';
+
+        // Simpan alasan penolakan pembayaran untuk referensi refund
+        $koneksi->exec("CREATE TABLE IF NOT EXISTS booking_rejections (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            id_booking INT NOT NULL,
+            kode_booking VARCHAR(255) NOT NULL,
+            reason TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY uniq_booking (id_booking)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $stmt_penolakan = $koneksi->prepare("INSERT INTO booking_rejections (id_booking, kode_booking, reason, created_at)
+            VALUES (?, ?, ?, NOW())
+            ON DUPLICATE KEY UPDATE reason = VALUES(reason), created_at = NOW()");
+        $stmt_penolakan->execute([$id_booking, $kode_booking, $pesan_penolakan]);
     }
 
     $link_detail = $url . 'bayar.php?id=' . $kode_booking;
@@ -91,10 +110,21 @@ if ($_GET['id'] == 'konfirmasi' && $_SERVER['REQUEST_METHOD'] == 'POST') {
 HTML;
 
     // Simpan notifikasi ke database
-    $insert_query = $koneksi->prepare("INSERT INTO notifikasi (id_login, pesan, status_baca) VALUES (?, ?, 0)");
-    $insert_query->bindParam(1, $user_id);
-    $insert_query->bindParam(2, $pesan);
-    $insert_query->execute();
+    // Untuk Pembayaran Ditolak, simpan juga pesan penolakan dan status khusus
+    if ($status == 'Pembayaran Ditolak') {
+        // Simpan dengan id_booking dan informasi tambahan
+        $insert_query = $koneksi->prepare("INSERT INTO notifikasi (id_login, id_booking, pesan, status_baca) VALUES (?, ?, ?, 0)");
+        $insert_query->bindParam(1, $user_id);
+        $insert_query->bindParam(2, $id_booking);
+        $insert_query->bindParam(3, $pesan);
+        $insert_query->execute();
+    } else {
+        $insert_query = $koneksi->prepare("INSERT INTO notifikasi (id_login, id_booking, pesan, status_baca) VALUES (?, ?, ?, 0)");
+        $insert_query->bindParam(1, $user_id);
+        $insert_query->bindParam(2, $id_booking);
+        $insert_query->bindParam(3, $pesan);
+        $insert_query->execute();
+    }
 
     // Kirim WhatsApp (gunakan API WhatsApp Gateway, contoh: https://wa.me/?phone=)
     // Ganti dengan API WhatsApp Gateway yang Anda gunakan
@@ -277,7 +307,7 @@ HTML;
             $buttonClass = '';
             $icon = '';
             
-            if ($status == 'Pembayaran Diterima' || $status == 'Sudah Dibayar') {
+            if ($status == 'Pembayaran Diterima') {
                 $headerClass = 'success';
                 $iconClass = 'success';
                 $buttonClass = 'success';
@@ -287,11 +317,11 @@ HTML;
                 $iconClass = 'processing';
                 $buttonClass = 'processing';
                 $icon = '<i class="fas fa-cog fa-spin"></i>';
-            } elseif ($status == 'Belum Dibayar') {
+            } elseif ($status == 'Pembayaran Ditolak') {
                 $headerClass = 'pending';
                 $iconClass = 'pending';
                 $buttonClass = 'pending';
-                $icon = '<i class="fas fa-exclamation-circle"></i>';
+                $icon = '<i class="fas fa-times-circle"></i>';
             } else {
                 // Default untuk status selesai atau lainnya
                 $headerClass = 'completed';

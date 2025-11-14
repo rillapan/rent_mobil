@@ -19,9 +19,9 @@ if ($aksi == 'update_web') {
     $sql = "UPDATE infoweb SET nama_rental = ?, email = ?, telp = ?, alamat = ?, no_rek = ? WHERE id = 1";
     $stmt = $koneksi->prepare($sql);
     if ($stmt->execute([$nama_rental, $email, $telp, $alamat, $no_rek])) {
-        header('Location: index.php?status=web_success');
+        header('Location: pengaturan/index.php?status=web_success');
     } else {
-        header('Location: index.php?status=web_error');
+        header('Location: pengaturan/index.php?status=web_error');
     }
 } elseif ($aksi == 'update_profil') {
     $id_login = $_SESSION["USER"]["id_login"];
@@ -35,9 +35,9 @@ if ($aksi == 'update_web') {
         if ($stmt->execute([$nama_pengguna, $username, $password, $id_login])) {
             $_SESSION['USER']['nama_pengguna'] = $nama_pengguna;
             $_SESSION['USER']['username'] = $username;
-            header('Location: index.php?status=profile_success');
+            header('Location: profil/index.php?status=profile_success');
         } else {
-            header('Location: index.php?status=profile_error');
+            header('Location: profil/index.php?status=profile_error');
         }
     } else {
         $sql = "UPDATE login SET nama_pengguna = ?, username = ? WHERE id_login = ?";
@@ -45,9 +45,9 @@ if ($aksi == 'update_web') {
         if ($stmt->execute([$nama_pengguna, $username, $id_login])) {
             $_SESSION['USER']['nama_pengguna'] = $nama_pengguna;
             $_SESSION['USER']['username'] = $username;
-            header('Location: index.php?status=profile_success');
+            header('Location: profil/index.php?status=profile_success');
         } else {
-            header('Location: index.php?status=profile_error');
+            header('Location: profil/index.php?status=profile_error');
         }
     }
 } else {

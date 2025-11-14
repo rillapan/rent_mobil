@@ -65,9 +65,7 @@
                                         <span class="badge bg-success text-white"><i class="fas fa-check-circle me-1"></i> Pembayaran Diterima</span>
                                     <?php } elseif($isi['konfirmasi_pembayaran'] == 'Sedang Diproses'){ ?>
                                         <span class="badge bg-warning text-white"><i class="fas fa-hourglass-half me-1"></i> Diproses</span>
-                                    <?php } elseif($isi['konfirmasi_pembayaran'] == 'Sudah Dibayar'){ ?>
-                                        <span class="badge bg-info text-white"><i class="fas fa-info-circle me-1"></i> Selesai</span>
-                                    <?php } else { ?>
+                                    <?php }else { ?>
                                         <span class="badge bg-danger text-white"><i class="fas fa-times-circle me-1"></i> Belum Dibayar</span>
                                     <?php } ?>
                                 </td>

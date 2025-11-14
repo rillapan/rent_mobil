@@ -1,6 +1,40 @@
 <?php
 session_start();
 require 'koneksi/koneksi.php';
+
+// Check login status
+if (isset($_POST['login'])) {
+    $username = $_POST['username'];
+    $password = $_POST['password'];
+
+    // Query untuk mencari user
+    $query = $koneksi->prepare("SELECT * FROM login WHERE username = ?");
+    $query->execute([$username]);
+    $user = $query->fetch();
+
+    if ($user) {
+        // Verifikasi password
+        if (md5($password) == $user['password']) {
+            $_SESSION['USER'] = $user;
+
+            // Redirect berdasarkan level
+            if ($user['level'] == 'admin') {
+                header("Location: admin/index.php");
+            } else {
+                header("Location: index.php");
+            }
+            exit();
+        } else {
+            // Password salah
+            header("Location: index.php?status=wrongpassword");
+            exit();
+        }
+    } else {
+        // Username tidak ditemukan
+        header("Location: index.php?status=usernotfound");
+        exit();
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -133,6 +167,69 @@ require 'koneksi/koneksi.php';
         .navbar-nav .nav-link:hover::after,
         .navbar-nav .nav-link.active::after {
             width: 80%;
+        }
+
+        /* Login Modal Styles */
+        .login-modal .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .login-modal .modal-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            border-bottom: none;
+            padding: 1.5rem 2rem;
+        }
+        
+        .login-modal .modal-body {
+            padding: 2rem;
+        }
+        
+        .login-modal .form-control {
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+        
+        .login-modal .form-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.2rem rgba(26, 35, 126, 0.25);
+        }
+        
+        .login-modal .btn-login {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .login-modal .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(26, 35, 126, 0.3);
+        }
+        
+        .login-links {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        
+        .login-links a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .login-links a:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
         }
 
         /* Hero Section */
@@ -1217,10 +1314,7 @@ require 'koneksi/koneksi.php';
                             <div class="rating-text">4.8/5 Rating</div>
                         </div>
 
-                        <div class="floating-element availability" data-aos="zoom-in" data-aos-delay="800">
-                            <div class="availability-dot"></div>
-                            <div class="availability-text">50+ Mobil Tersedia</div>
-                        </div>
+                        
                     </div>
                 </div>
             </div>
@@ -1476,6 +1570,134 @@ require 'koneksi/koneksi.php';
         </a>
     </div>
 
+    <!-- Login Modal -->
+    <div class="modal fade login-modal" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Login ke Akun Anda
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true" style="color: white;">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="Masukkan username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Masukkan password" required>
+                        </div>
+                        <button type="submit" name="login" class="btn btn-login mt-4">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Login
+                        </button>
+                    </form>
+                    <div class="login-links mt-3">
+                        <a href="#" data-toggle="modal" data-target="#registerModal" data-dismiss="modal">Belum punya akun? Daftar di sini</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal fade register-modal" id="registerModal" tabindex="-1" role="dialog" aria-labelledby="registerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="registerModalLabel">
+                        <i class="fas fa-user-plus mr-2"></i>Daftar Akun Baru
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="registerForm" method="post" action="koneksi/proses.php?id=daftar">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="nama" class="font-weight-bold">
+                                        <i class="fas fa-user mr-1"></i>Nama Lengkap
+                                    </label>
+                                    <input type="text" class="form-control" id="nama" name="nama"
+                                           placeholder="Masukkan nama lengkap" required>
+                                    <div class="invalid-feedback">
+                                        Nama lengkap wajib diisi.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="user" class="font-weight-bold">
+                                        <i class="fas fa-at mr-1"></i>Username
+                                    </label>
+                                    <input type="text" class="form-control" id="user" name="user"
+                                           placeholder="Masukkan username" required>
+                                    <div class="invalid-feedback">
+                                        Username wajib diisi dan minimal 3 karakter.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="no_hp" class="font-weight-bold">
+                                <i class="fas fa-phone mr-1"></i>Nomor HP
+                            </label>
+                            <input type="tel" class="form-control" id="no_hp" name="no_hp"
+                                   placeholder="Masukkan nomor HP (contoh: 081234567890)" required>
+                            <div class="invalid-feedback">
+                                Nomor HP wajib diisi dengan format yang benar.
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="pass" class="font-weight-bold">
+                                        <i class="fas fa-lock mr-1"></i>Password
+                                    </label>
+                                    <input type="password" class="form-control" id="pass" name="pass"
+                                           placeholder="Masukkan password" required>
+                                    <div class="password-strength" id="passwordStrength" style="display: none;">
+                                        <div class="strength-meter">
+                                            <div class="strength-fill" id="strengthFill"></div>
+                                        </div>
+                                        <div class="strength-text" id="strengthText">Kekuatan password</div>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        Password minimal 6 karakter dengan kombinasi huruf dan angka.
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="confirm_pass" class="font-weight-bold">
+                                        <i class="fas fa-lock mr-1"></i>Konfirmasi Password
+                                    </label>
+                                    <input type="password" class="form-control" id="confirm_pass"
+                                           placeholder="Ulangi password" required>
+                                    <div class="invalid-feedback">
+                                        Konfirmasi password tidak cocok.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary-custom btn-lg w-100 mt-3" id="submitBtn">
+                            <i class="fas fa-user-plus mr-2"></i>Daftar Sekarang
+                        </button>
+                    </form>
+                    <div class="text-center mt-3">
+                        <a href="#" data-toggle="modal" data-target="#loginModal" data-dismiss="modal">Sudah punya akun? Login di sini</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <?php include 'footer.php'; ?>
 
@@ -1501,7 +1723,7 @@ require 'koneksi/koneksi.php';
                 $('.modern-header').removeClass('scrolled');
             }
         });
-        
+
         $(document).ready(function() {
             // Counter Animation
             function animateCounter(element, target, duration = 2000) {
@@ -1572,42 +1794,248 @@ require 'koneksi/koneksi.php';
                 });
                 $('#contactForm')[0].reset();
             });
-            
-            // Status messages
-            <?php if(isset($_GET['status'])): ?>
-            document.addEventListener('DOMContentLoaded', function() {
-                const status = '<?php echo $_GET['status']; ?>';
-                if (status === 'loginsuccess') {
-                    Swal.fire({
-                        title: 'Login Berhasil!',
-                        text: 'Selamat datang kembali!',
-                        icon: 'success',
-                        confirmButtonText: 'OK'
+
+            // Password strength checker
+            function checkPasswordStrength(password) {
+                let strength = 0;
+                let feedback = [];
+
+                if (password.length >= 6) strength++;
+                else feedback.push("Minimal 6 karakter");
+
+                if (/[a-z]/.test(password)) strength++;
+                else feedback.push("Huruf kecil");
+
+                if (/[A-Z]/.test(password)) strength++;
+                else feedback.push("Huruf besar");
+
+                if (/[0-9]/.test(password)) strength++;
+                else feedback.push("Angka");
+
+                if (/[^A-Za-z0-9]/.test(password)) strength++;
+                else feedback.push("Karakter khusus");
+
+                return { strength, feedback };
+            }
+
+            // Update password strength indicator
+            $('#pass').on('input', function() {
+                const password = $(this).val();
+                const { strength, feedback } = checkPasswordStrength(password);
+
+                if (password.length > 0) {
+                    $('#passwordStrength').show();
+                    const percentage = (strength / 5) * 100;
+                    $('#strengthFill').css('width', percentage + '%');
+
+                    let color = '#dc3545'; // red
+                    let text = 'Lemah';
+
+                    if (strength >= 3) {
+                        color = '#ffc107'; // yellow
+                        text = 'Sedang';
+                    }
+                    if (strength >= 4) {
+                        color = '#28a745'; // green
+                        text = 'Kuat';
+                    }
+
+                    $('#strengthFill').css('background-color', color);
+                    $('#strengthText').text(text + ' - ' + feedback.join(', '));
+                } else {
+                    $('#passwordStrength').hide();
+                }
+            });
+
+            // Register form validation
+            $('#registerForm').submit(function(e) {
+                e.preventDefault();
+
+                const nama = $('#nama').val().trim();
+                const user = $('#user').val().trim();
+                const no_hp = $('#no_hp').val().trim();
+                const pass = $('#pass').val();
+                const confirm_pass = $('#confirm_pass').val();
+
+                // Reset validation
+                $('.form-control').removeClass('is-invalid');
+                $('.invalid-feedback').hide();
+
+                let isValid = true;
+
+                // Validate nama
+                if (nama.length < 2) {
+                    $('#nama').addClass('is-invalid');
+                    $('#nama').next('.invalid-feedback').show();
+                    isValid = false;
+                }
+
+                // Validate username
+                if (user.length < 3) {
+                    $('#user').addClass('is-invalid');
+                    $('#user').next('.invalid-feedback').show();
+                    isValid = false;
+                }
+
+                // Validate no_hp
+                const phoneRegex = /^(\+62|62|0)[8-9][0-9]{7,11}$/;
+                if (!phoneRegex.test(no_hp)) {
+                    $('#no_hp').addClass('is-invalid');
+                    $('#no_hp').next('.invalid-feedback').show();
+                    isValid = false;
+                }
+
+                // Validate password
+                if (pass.length < 6) {
+                    $('#pass').addClass('is-invalid');
+                    isValid = false;
+                }
+
+                // Validate confirm password
+                if (pass !== confirm_pass) {
+                    $('#confirm_pass').addClass('is-invalid');
+                    $('#confirm_pass').next('.invalid-feedback').show();
+                    isValid = false;
+                }
+
+                if (isValid) {
+                    // Submit form
+                    $('#submitBtn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Mendaftarkan...');
+
+                    // Use FormData for file uploads if needed, but here it's just form data
+                    const formData = new FormData(this);
+
+                    $.ajax({
+                        url: $(this).attr('action'),
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            // Since it's a redirect, we handle success via URL status
+                            // But for AJAX, we can check response or assume success
+                            window.location.href = 'index.php?status=registersuccess';
+                        },
+                        error: function(xhr, status, error) {
+                            $('#submitBtn').prop('disabled', false).html('<i class="fas fa-user-plus mr-2"></i>Daftar Sekarang');
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.',
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            });
+                        }
                     });
-                } else if (status === 'loginfailed') {
-                    Swal.fire({
-                        title: 'Login Gagal!',
-                        text: 'Username atau password salah.',
-                        icon: 'error',
-                        confirmButtonText: 'Coba Lagi'
-                    });
-                } else if (status === 'registersuccess') {
+                }
+            });
+
+            // Show status messages based on URL parameter
+            function showStatusMessage() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const status = urlParams.get('status');
+
+                if (status === 'registersuccess') {
                     Swal.fire({
                         title: 'Pendaftaran Berhasil!',
-                        text: 'Silahkan login dengan akun Anda.',
+                        html: '<i class="fas fa-check-circle fa-3x text-success mb-3"></i><br><strong>Selamat!</strong><br>Akun Anda telah berhasil didaftarkan. Silakan login untuk melanjutkan.',
                         icon: 'success',
-                        confirmButtonText: 'Login'
+                        showCancelButton: true,
+                        confirmButtonText: 'Login Sekarang',
+                        cancelButtonText: 'Kembali ke Beranda',
+                        confirmButtonColor: '#28a745',
+                        cancelButtonColor: '#6c757d',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $('#loginModal').modal('show');
+                        }
                     });
                 } else if (status === 'registerfailed') {
                     Swal.fire({
                         title: 'Pendaftaran Gagal!',
-                        text: 'Username sudah digunakan, coba yang lain.',
+                        html: '<i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i><br><strong>Username sudah digunakan</strong><br>Silakan gunakan username yang berbeda.',
                         icon: 'error',
-                        confirmButtonText: 'OK'
+                        showCancelButton: true,
+                        confirmButtonText: 'Coba Lagi',
+                        cancelButtonText: 'Kembali ke Beranda',
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#6c757d',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $('#registerModal').modal('show');
+                        }
+                    });
+                } else if (status === 'usernotfound') {
+                    Swal.fire({
+                        title: 'Login Gagal!',
+                        html: '<i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i><br><strong>Username tidak ditemukan</strong><br>Silakan periksa kembali username Anda atau daftar akun baru.',
+                        icon: 'error',
+                        showCancelButton: true,
+                        confirmButtonText: 'Coba Lagi',
+                        cancelButtonText: 'Daftar Akun',
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#6c757d',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $('#loginModal').modal('show');
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            $('#registerModal').modal('show');
+                        }
+                    });
+                } else if (status === 'wrongpassword') {
+                    Swal.fire({
+                        title: 'Login Gagal!',
+                        html: '<i class="fas fa-lock fa-3x text-danger mb-3"></i><br><strong>Password salah</strong><br>Password yang Anda masukkan tidak benar. Silakan coba lagi atau daftar akun baru.',
+                        icon: 'error',
+                        showCancelButton: true,
+                        confirmButtonText: 'Coba Lagi',
+                        cancelButtonText: 'Daftar Akun',
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#6c757d',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $('#loginModal').modal('show');
+                        } else if (result.dismiss === Swal.DismissReason.cancel) {
+                            $('#registerModal').modal('show');
+                        }
+                    });
+                } else if (status === 'loginfailed') {
+                    Swal.fire({
+                        title: 'Login Gagal',
+                        text: 'Username atau password salah.',
+                        icon: 'error',
+                        showCancelButton: true,
+                        confirmButtonText: 'Coba Lagi',
+                        cancelButtonText: 'Buat Akun'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // User clicked "Coba Lagi"
+                            // You can add any additional logic here if needed
+                        } else if (result.isDismissed) {
+                            // User clicked "Buat Akun"
+                            window.location.href = 'register.php'; // Redirect to register.php
+                        }
                     });
                 }
+
+                // Remove status parameter from URL without page reload
+                if (status) {
+                    const newUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, newUrl);
+                }
+            }
+
+            // Call the function when page loads
+            showStatusMessage();
+
+            // Update "Daftar Akun" button in hero section to open register modal
+            $('.btn-secondary-hero').click(function(e) {
+                e.preventDefault();
+                $('#registerModal').modal('show');
             });
-            <?php endif; ?>
         });
     </script>
 </body>

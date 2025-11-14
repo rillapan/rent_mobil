@@ -572,7 +572,7 @@
     </div>
 
     <!-- Login Modal -->
-    <div class="login-modal" id="loginModal">
+    <div class="login-modal" id="headerLoginModal">
       <div class="login-modal-content">
         <button class="login-modal-close" id="loginModalClose"><i class="fas fa-times"></i></button>
         <div class="login-modal-header text-center mb-4">
@@ -596,7 +596,7 @@
     </div>
 
     <!-- Register Modal -->
-    <div class="register-modal" id="registerModal">
+    <div class="register-modal" id="headerRegisterModal">
       <div class="register-modal-content">
         <button class="register-modal-close" id="registerModalClose"><i class="fas fa-times"></i></button>
         <div class="register-modal-header text-center mb-4">
@@ -735,14 +735,14 @@
         });
         
         // Login Modal functionality
-        const loginModal = document.getElementById('loginModal');
+        const loginModal = document.getElementById('headerLoginModal');
         const loginModalClose = document.getElementById('loginModalClose');
         const sidebarLoginBtn = document.getElementById('sidebarLoginBtn');
         const desktopLoginBtn = document.getElementById('desktopLoginBtn');
         const registerLink = document.getElementById('registerLink');
 
         // Register Modal functionality
-        const registerModal = document.getElementById('registerModal');
+        const registerModal = document.getElementById('headerRegisterModal');
         const registerModalClose = document.getElementById('registerModalClose');
         const loginLink = document.getElementById('loginLink');
 
