@@ -36,16 +36,13 @@ if (isset($_GET['aksi'])) {
         }
 
         $sql = "INSERT INTO supir (nama_supir, pengalaman, harga_sewa, status, deskripsi, foto) VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt = $koneksi->prepare($sql);
-        $stmt->bindParam(1, $nama_supir);
-        $stmt->bindParam(2, $pengalaman);
-        $stmt->bindParam(3, $harga_sewa);
-        $stmt->bindParam(4, $status);
-        $stmt->bindParam(5, $deskripsi);
-        $stmt->bindParam(6, $foto);
-        if ($stmt->execute()) {
+        $stmt = mysqli_prepare($koneksi, $sql);
+        mysqli_stmt_bind_param($stmt, "siisss", $nama_supir, $pengalaman, $harga_sewa, $status, $deskripsi, $foto);
+        if (mysqli_stmt_execute($stmt)) {
+            mysqli_stmt_close($stmt);
             header('Location: supir.php?pesan=sukses-tambah');
         } else {
+            mysqli_stmt_close($stmt);
             header('Location: tambah.php?pesan=gagal-tambah');
         }
 
@@ -60,10 +57,12 @@ if (isset($_GET['aksi'])) {
 
         // Ambil data supir lama untuk foto
         $sql_old = "SELECT foto FROM supir WHERE id_supir = ?";
-        $stmt_old = $koneksi->prepare($sql_old);
-        $stmt_old->bindParam(1, $id_supir);
-        $stmt_old->execute();
-        $old_supir = $stmt_old->fetch(PDO::FETCH_ASSOC);
+        $stmt_old = mysqli_prepare($koneksi, $sql_old);
+        mysqli_stmt_bind_param($stmt_old, "i", $id_supir);
+        mysqli_stmt_execute($stmt_old);
+        $result_stmt_old = mysqli_stmt_get_result($stmt_old);
+        $old_supir = mysqli_fetch_assoc($result_stmt_old);
+        mysqli_stmt_close($stmt_old);
         $foto = $old_supir['foto'];
 
         // Proses upload foto baru jika ada
@@ -93,17 +92,13 @@ if (isset($_GET['aksi'])) {
         }
 
         $sql = "UPDATE supir SET nama_supir = ?, pengalaman = ?, harga_sewa = ?, status = ?, deskripsi = ?, foto = ? WHERE id_supir = ?";
-        $stmt = $koneksi->prepare($sql);
-        $stmt->bindParam(1, $nama_supir);
-        $stmt->bindParam(2, $pengalaman);
-        $stmt->bindParam(3, $harga_sewa);
-        $stmt->bindParam(4, $status);
-        $stmt->bindParam(5, $deskripsi);
-        $stmt->bindParam(6, $foto);
-        $stmt->bindParam(7, $id_supir);
-        if ($stmt->execute()) {
+        $stmt = mysqli_prepare($koneksi, $sql);
+        mysqli_stmt_bind_param($stmt, "siisssi", $nama_supir, $pengalaman, $harga_sewa, $status, $deskripsi, $foto, $id_supir);
+        if (mysqli_stmt_execute($stmt)) {
+            mysqli_stmt_close($stmt);
             header('Location: supir.php?pesan=sukses-edit');
         } else {
+            mysqli_stmt_close($stmt);
             header('Location: edit.php?id=' . $id_supir . '&pesan=gagal-edit');
         }
 
@@ -121,11 +116,13 @@ if (isset($_GET['aksi'])) {
         }
 
         $sql = "DELETE FROM supir WHERE id_supir = ?";
-        $stmt = $koneksi->prepare($sql);
-        $stmt->bindParam(1, $id_supir);
-        if ($stmt->execute()) {
+        $stmt = mysqli_prepare($koneksi, $sql);
+        mysqli_stmt_bind_param($stmt, "i", $id_supir);
+        if (mysqli_stmt_execute($stmt)) {
+            mysqli_stmt_close($stmt);
             header('Location: supir.php?pesan=sukses-hapus');
         } else {
+            mysqli_stmt_close($stmt);
             header('Location: supir.php?pesan=gagal-hapus');
         }
     }

@@ -6,21 +6,33 @@ include 'header.php';
 
 // Ambil data info website
 $sql_web = "SELECT * FROM infoweb WHERE id = 1";
-$row_web = $koneksi->prepare($sql_web);
-$row_web->execute();
-$info_web = $row_web->fetch(PDO::FETCH_OBJ);
+$row_web = mysqli_prepare($koneksi, $sql_web);
+mysqli_stmt_execute($row_web);
+$result_stmt = mysqli_stmt_get_result($row_web);
+$info_web = mysqli_fetch_object($result_stmt);
+mysqli_stmt_close($row_web);
 
 // Ambil data profil admin
 $id_login = $_SESSION["USER"]["id_login"];
 $sql_profil = "SELECT * FROM login WHERE id_login = ?";
-$row_profil = $koneksi->prepare($sql_profil);
-$row_profil->execute(array($id_login));
-$profil_admin = $row_profil->fetch(PDO::FETCH_OBJ);
+$row_profil = mysqli_prepare($koneksi, $sql_profil);
+mysqli_stmt_bind_param($row_profil, "i", $id_login);
+mysqli_stmt_execute($row_profil);
+$result_stmt = mysqli_stmt_get_result($row_profil);
+$profil_admin = mysqli_fetch_object($result_stmt);
+mysqli_stmt_close($row_profil);
 
 function fetchSingle($koneksi, $sql, $params = []) {
-    $stmt = $koneksi->prepare($sql);
-    $stmt->execute($params);
-    return $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = mysqli_prepare($koneksi, $sql);
+    if (!empty($params)) {
+        $types = str_repeat('s', count($params)); // Assuming all params are strings, adjust if needed
+        mysqli_stmt_bind_param($stmt, $types, ...$params);
+    }
+    mysqli_stmt_execute($stmt);
+    $result_stmt = mysqli_stmt_get_result($stmt);
+    $result = mysqli_fetch_assoc($result_stmt);
+    mysqli_stmt_close($stmt);
+    return $result;
 }
 
 // Data pendapatan

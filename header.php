@@ -522,18 +522,24 @@
 
         // Ambil data info website
         $sql_web = "SELECT * FROM infoweb WHERE id = 1";
-        $row_web = $koneksi->prepare($sql_web);
-        $row_web->execute();
-        $info_web = $row_web->fetch(PDO::FETCH_OBJ);
+        $row_web = mysqli_prepare($koneksi, $sql_web);
+        mysqli_stmt_execute($row_web);
+        $result_stmt = mysqli_stmt_get_result($row_web);
+        $info_web = mysqli_fetch_object($result_stmt);
+        mysqli_stmt_close($row_web);
 
         // Ambil notifikasi
         $unread_notifications_count = 0;
         if (!empty($_SESSION['USER'])) {
             $id_login = $_SESSION['USER']['id_login'];
             $sql_notif = "SELECT COUNT(*) as total FROM notifikasi WHERE id_login = ? AND status_baca = 0";
-            $row_notif = $koneksi->prepare($sql_notif);
-            $row_notif->execute(array($id_login));
-            $unread_notifications_count = $row_notif->fetch(PDO::FETCH_OBJ)->total;
+            $row_notif = mysqli_prepare($koneksi, $sql_notif);
+            mysqli_stmt_bind_param($row_notif, "i", $id_login);
+            mysqli_stmt_execute($row_notif);
+            $result_stmt = mysqli_stmt_get_result($row_notif);
+            $notif_obj = mysqli_fetch_object($result_stmt);
+            $unread_notifications_count = $notif_obj->total;
+            mysqli_stmt_close($row_notif);
         }
     ?>
     <!-- Sidebar for mobile -->

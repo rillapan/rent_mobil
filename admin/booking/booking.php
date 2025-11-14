@@ -68,91 +68,87 @@ $sql = "SELECT mobil.merk, mobil.status AS status_mobil, booking.*,
         LEFT JOIN supir ON booking.id_supir = supir.id_supir" . $where_clause . "
         ORDER BY id_booking DESC";
 
-try {
-    $row = $koneksi->prepare($sql);
-    
-    // Bind parameters jika ada
-    if (!empty($params)) {
-        if (strlen($param_types) === 1) {
-            $row->bindParam(1, $params[0], $param_types === 's' ? PDO::PARAM_STR : PDO::PARAM_INT);
-        } else {
-            for ($i = 0; $i < count($params); $i++) {
-                $param_type = $param_types[$i] === 's' ? PDO::PARAM_STR : PDO::PARAM_INT;
-                $row->bindValue($i + 1, $params[$i], $param_type);
-            }
-        }
+$row = mysqli_prepare($koneksi, $sql);
+
+// Bind parameters jika ada
+if (!empty($params)) {
+    $bind_types = '';
+    foreach ($params as $param) {
+        $bind_types .= is_int($param) ? 'i' : 's';
     }
-    
-    $row->execute();
-    $hasil = $row->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    echo "<div class='alert alert-danger'>Error: " . $e->getMessage() . "</div>";
-    $hasil = [];
+    mysqli_stmt_bind_param($row, $bind_types, ...$params);
 }
+
+mysqli_stmt_execute($row);
+$result_stmt = mysqli_stmt_get_result($row);
+$hasil = [];
+while ($row_data = mysqli_fetch_assoc($result_stmt)) {
+    $hasil[] = $row_data;
+}
+mysqli_stmt_close($row);
 
 // Query untuk mendapatkan jumlah data per status pembayaran
-try {
-    $sql_pembayaran = "SELECT 
-        COUNT(CASE WHEN konfirmasi_pembayaran = 'Pembayaran Diterima' THEN 1 END) as pembayaran_diterima,
-        COUNT(CASE WHEN konfirmasi_pembayaran = 'Sedang Diproses' THEN 1 END) as sedang_diproses,
-        COUNT(*) as total_booking
-        FROM booking 
-        JOIN mobil ON booking.id_mobil = mobil.id_mobil";
-    
-    $stmt_pembayaran = $koneksi->prepare($sql_pembayaran);
-    $stmt_pembayaran->execute();
-    $stats_pembayaran = $stmt_pembayaran->fetch(PDO::FETCH_ASSOC);
-    
-    // Query untuk mendapatkan jumlah data per status sewa
-    $sql_sewa = "SELECT
-        COUNT(CASE WHEN mobil.status = 'Tersedia' AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) > CURDATE() THEN 1 END) as disewa,
-        COUNT(CASE WHEN mobil.status = 'Tersedia' AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) <= CURDATE() THEN 1 END) as selesai,
-        COUNT(CASE WHEN mobil.status = 'Tidak Tersedia' AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) = CURDATE() THEN 1 END) as masa_sewa_habis,
-        COUNT(CASE WHEN mobil.status = 'Tidak Tersedia' AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) < CURDATE() THEN 1 END) as terlambat_pengembalian,
-        COUNT(CASE WHEN booking.konfirmasi_pembayaran = 'Refund Diterima / Uang Dikembalikan' THEN 1 END) as dibatalkan
-        FROM booking
-        JOIN mobil ON booking.id_mobil = mobil.id_mobil";
-    
-    $stmt_sewa = $koneksi->prepare($sql_sewa);
-    $stmt_sewa->execute();
-    $stats_sewa = $stmt_sewa->fetch(PDO::FETCH_ASSOC);
-    
-} catch (PDOException $e) {
-    echo "<div class='alert alert-danger'>Error: " . $e->getMessage() . "</div>";
-    $stats_pembayaran = [];
-    $stats_sewa = [];
-}
+$sql_pembayaran = "SELECT
+    COUNT(CASE WHEN konfirmasi_pembayaran = 'Pembayaran Diterima' THEN 1 END) as pembayaran_diterima,
+    COUNT(CASE WHEN konfirmasi_pembayaran = 'Sedang Diproses' THEN 1 END) as sedang_diproses,
+    COUNT(*) as total_booking
+    FROM booking
+    JOIN mobil ON booking.id_mobil = mobil.id_mobil";
+
+$stmt_pembayaran = mysqli_prepare($koneksi, $sql_pembayaran);
+mysqli_stmt_execute($stmt_pembayaran);
+$result_stmt_pembayaran = mysqli_stmt_get_result($stmt_pembayaran);
+$stats_pembayaran = mysqli_fetch_assoc($result_stmt_pembayaran);
+mysqli_stmt_close($stmt_pembayaran);
+
+// Query untuk mendapatkan jumlah data per status sewa
+$sql_sewa = "SELECT
+    COUNT(CASE WHEN mobil.status = 'Tersedia' AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) > CURDATE() THEN 1 END) as disewa,
+    COUNT(CASE WHEN mobil.status = 'Tersedia' AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) <= CURDATE() THEN 1 END) as selesai,
+    COUNT(CASE WHEN mobil.status = 'Tidak Tersedia' AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) = CURDATE() THEN 1 END) as masa_sewa_habis,
+    COUNT(CASE WHEN mobil.status = 'Tidak Tersedia' AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) < CURDATE() THEN 1 END) as terlambat_pengembalian,
+    COUNT(CASE WHEN booking.konfirmasi_pembayaran = 'Refund Diterima / Uang Dikembalikan' THEN 1 END) as dibatalkan
+    FROM booking
+    JOIN mobil ON booking.id_mobil = mobil.id_mobil";
+
+$stmt_sewa = mysqli_prepare($koneksi, $sql_sewa);
+mysqli_stmt_execute($stmt_sewa);
+$result_stmt_sewa = mysqli_stmt_get_result($stmt_sewa);
+$stats_sewa = mysqli_fetch_assoc($result_stmt_sewa);
+mysqli_stmt_close($stmt_sewa);
 
 // Logika otomatis update status supir ketika sewa selesai
-try {
-    // Cari booking yang sudah selesai (tanggal akhir <= hari ini) dan supir masih 'Sedang Digunakan'
-    $sql_check_selesai = "SELECT b.id_booking, b.kode_booking, b.id_supir, s.status AS status_supir
-                         FROM booking b
-                         JOIN supir s ON b.id_supir = s.id_supir
-                         WHERE b.id_supir IS NOT NULL
-                         AND s.status = 'Sedang Digunakan'
-                         AND DATE_ADD(b.tanggal, INTERVAL b.lama_sewa DAY) <= CURDATE()
-                         AND (b.status_pengembalian IS NULL OR b.status_pengembalian = '' OR b.status_pengembalian = 'Belum Dikembalikan')
-                         AND b.konfirmasi_pembayaran != 'Refund Diterima / Uang Dikembalikan'";
+// Cari booking yang sudah selesai (tanggal akhir <= hari ini) dan supir masih 'Sedang Digunakan'
+$sql_check_selesai = "SELECT b.id_booking, b.kode_booking, b.id_supir, s.status AS status_supir
+                     FROM booking b
+                     JOIN supir s ON b.id_supir = s.id_supir
+                     WHERE b.id_supir IS NOT NULL
+                     AND s.status = 'Sedang Digunakan'
+                     AND DATE_ADD(b.tanggal, INTERVAL b.lama_sewa DAY) <= CURDATE()
+                     AND (b.status_pengembalian IS NULL OR b.status_pengembalian = '' OR b.status_pengembalian = 'Belum Dikembalikan')
+                     AND b.konfirmasi_pembayaran != 'Refund Diterima / Uang Dikembalikan'";
 
-    $stmt_check = $koneksi->prepare($sql_check_selesai);
-    $stmt_check->execute();
-    $bookings_selesai = $stmt_check->fetchAll(PDO::FETCH_ASSOC);
+$stmt_check = mysqli_prepare($koneksi, $sql_check_selesai);
+mysqli_stmt_execute($stmt_check);
+$result_stmt_check = mysqli_stmt_get_result($stmt_check);
+$bookings_selesai = [];
+while ($row = mysqli_fetch_assoc($result_stmt_check)) {
+    $bookings_selesai[] = $row;
+}
+mysqli_stmt_close($stmt_check);
 
-    // Update status supir menjadi 'Tersedia' untuk booking yang sudah selesai
-    if (!empty($bookings_selesai)) {
-        foreach ($bookings_selesai as $booking) {
-            $sql_update_supir = "UPDATE supir SET status = 'Tersedia' WHERE id_supir = ?";
-            $stmt_update = $koneksi->prepare($sql_update_supir);
-            $stmt_update->execute([$booking['id_supir']]);
+// Update status supir menjadi 'Tersedia' untuk booking yang sudah selesai
+if (!empty($bookings_selesai)) {
+    foreach ($bookings_selesai as $booking) {
+        $sql_update_supir = "UPDATE supir SET status = 'Tersedia' WHERE id_supir = ?";
+        $stmt_update = mysqli_prepare($koneksi, $sql_update_supir);
+        mysqli_stmt_bind_param($stmt_update, "i", $booking['id_supir']);
+        mysqli_stmt_execute($stmt_update);
+        mysqli_stmt_close($stmt_update);
 
-            // Log untuk debugging (opsional, bisa dihapus nanti)
-            error_log("Auto-updated supir ID {$booking['id_supir']} to 'Tersedia' for booking {$booking['kode_booking']}");
-        }
+        // Log untuk debugging (opsional, bisa dihapus nanti)
+        error_log("Auto-updated supir ID {$booking['id_supir']} to 'Tersedia' for booking {$booking['kode_booking']}");
     }
-} catch (PDOException $e) {
-    // Log error tapi jangan tampilkan ke user
-    error_log("Error in auto-update supir status: " . $e->getMessage());
 }
 ?>
 

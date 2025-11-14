@@ -5,7 +5,7 @@ $url = '../../';
 include '../header.php';
 
 // Pastikan tabel refund_requests tersedia (untuk kompatibilitas deployment)
-$koneksi->exec("CREATE TABLE IF NOT EXISTS refund_requests (
+mysqli_query($koneksi, "CREATE TABLE IF NOT EXISTS refund_requests (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_booking INT NOT NULL,
     kode_booking VARCHAR(255) NOT NULL,
@@ -30,7 +30,7 @@ $koneksi->exec("CREATE TABLE IF NOT EXISTS refund_requests (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 // Pastikan tabel booking_rejections tersedia
-$koneksi->exec("CREATE TABLE IF NOT EXISTS booking_rejections (
+mysqli_query($koneksi, "CREATE TABLE IF NOT EXISTS booking_rejections (
     id INT AUTO_INCREMENT PRIMARY KEY,
     id_booking INT NOT NULL,
     kode_booking VARCHAR(255) NOT NULL,
@@ -40,7 +40,7 @@ $koneksi->exec("CREATE TABLE IF NOT EXISTS booking_rejections (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 // Ambil daftar refund beserta detail tambahan
-$sql_refund = "SELECT 
+$sql_refund = "SELECT
         rr.*,
         b.tanggal AS tanggal_booking,
         b.tgl_input,
@@ -61,9 +61,14 @@ $sql_refund = "SELECT
     LEFT JOIN login l ON rr.id_login = l.id_login
     LEFT JOIN booking_rejections br ON b.id_booking = br.id_booking
     ORDER BY rr.status = 'Menunggu Refund' DESC, rr.created_at DESC";
-$stmt_refund = $koneksi->prepare($sql_refund);
-$stmt_refund->execute();
-$refund_requests = $stmt_refund->fetchAll(PDO::FETCH_ASSOC);
+$stmt_refund = mysqli_prepare($koneksi, $sql_refund);
+mysqli_stmt_execute($stmt_refund);
+$result_stmt_refund = mysqli_stmt_get_result($stmt_refund);
+$refund_requests = [];
+while ($row = mysqli_fetch_assoc($result_stmt_refund)) {
+    $refund_requests[] = $row;
+}
+mysqli_stmt_close($stmt_refund);
 
 $pending_requests = [];
 $completed_requests = [];
@@ -80,9 +85,15 @@ if (!empty($completed_requests)) {
     $admin_ids = array_unique(array_filter(array_column($completed_requests, 'admin_id')));
     if (!empty($admin_ids)) {
         $placeholders = implode(',', array_fill(0, count($admin_ids), '?'));
-        $stmt_admin_map = $koneksi->prepare("SELECT id_login, nama_pengguna FROM login WHERE id_login IN ($placeholders)");
-        $stmt_admin_map->execute($admin_ids);
-        $admin_name_map = $stmt_admin_map->fetchAll(PDO::FETCH_KEY_PAIR);
+        $stmt_admin_map = mysqli_prepare($koneksi, "SELECT id_login, nama_pengguna FROM login WHERE id_login IN ($placeholders)");
+        mysqli_stmt_bind_param($stmt_admin_map, str_repeat('i', count($admin_ids)), ...$admin_ids);
+        mysqli_stmt_execute($stmt_admin_map);
+        $result_stmt_admin = mysqli_stmt_get_result($stmt_admin_map);
+        $admin_name_map = [];
+        while ($row = mysqli_fetch_assoc($result_stmt_admin)) {
+            $admin_name_map[$row['id_login']] = $row['nama_pengguna'];
+        }
+        mysqli_stmt_close($stmt_admin_map);
     }
 }
 

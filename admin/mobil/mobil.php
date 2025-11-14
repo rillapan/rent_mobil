@@ -79,9 +79,14 @@
                     <tbody>
                         <?php
                             $sql = "SELECT * FROM mobil ORDER BY id_mobil DESC";
-                            $row = $koneksi->prepare($sql);
-                            $row->execute();
-                            $hasil = $row->fetchAll();
+                            $row = mysqli_prepare($koneksi, $sql);
+                            mysqli_stmt_execute($row);
+                            $result_stmt = mysqli_stmt_get_result($row);
+                            $hasil = [];
+                            while ($row_data = mysqli_fetch_assoc($result_stmt)) {
+                                $hasil[] = $row_data;
+                            }
+                            mysqli_stmt_close($row);
                             $no = 1;
 
                             foreach($hasil as $isi)

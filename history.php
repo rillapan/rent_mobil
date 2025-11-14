@@ -11,10 +11,17 @@
 
     include 'header.php';
 
-    $hasil = $koneksi->prepare("SELECT mobil.merk, booking.*, supir.nama_supir, supir.harga_sewa as harga_supir FROM booking JOIN mobil ON
+    $stmt = mysqli_prepare($koneksi, "SELECT mobil.merk, booking.*, supir.nama_supir, supir.harga_sewa as harga_supir FROM booking JOIN mobil ON
     booking.id_mobil=mobil.id_mobil LEFT JOIN supir ON booking.id_supir=supir.id_supir WHERE booking.id_login = ? ORDER BY id_booking DESC");
-    $hasil->execute(array($id_login));
-    $count = $hasil->rowCount();
+    mysqli_stmt_bind_param($stmt, "i", $id_login);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $hasil = [];
+    while ($row = mysqli_fetch_assoc($result)) {
+        $hasil[] = $row;
+    }
+    mysqli_stmt_close($stmt);
+    $count = count($hasil);
 ?>
 <style>
     .card-header {
@@ -158,12 +165,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id_booking'])) {
     $id_booking = $_POST['id_booking']; // pastikan ini didapat dari form
 
     // Update status booking otomatis ke "Sedang Diproses"
-    $koneksi->query("UPDATE booking SET konfirmasi_pembayaran='Sedang Diproses' WHERE id_booking='$id_booking'");
+    mysqli_query($koneksi, "UPDATE booking SET konfirmasi_pembayaran='Sedang Diproses' WHERE id_booking='$id_booking'");
 
     // Kirim notifikasi ke user (opsional)
     $pesan = "Konfirmasi Terkirim! Pembayaran Anda sedang kami proses. Terima kasih.";
     $user_id = $_SESSION['USER']['id_login'];
-    $koneksi->query("INSERT INTO notifikasi (id_login, pesan, status_baca) VALUES ('$user_id', '$pesan', 0)");
+    mysqli_query($koneksi, "INSERT INTO notifikasi (id_login, pesan, status_baca) VALUES ('$user_id', '$pesan', 0)");
 
     // Kirim WhatsApp notifikasi
     $user_no_hp = $_SESSION['USER']['no_hp'];

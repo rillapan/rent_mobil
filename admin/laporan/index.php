@@ -5,67 +5,89 @@ $url = '../../';
 include '../header.php';
 
 // Data sewa selesai
-$sql_selesai = "SELECT 
+$sql_selesai = "SELECT
     COUNT(CASE WHEN DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) <= CURDATE() AND YEARWEEK(DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY), 1) = YEARWEEK(CURDATE(), 1) THEN 1 END) AS minggu_ini,
     COUNT(CASE WHEN DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) <= CURDATE() AND YEAR(DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY)) = YEAR(CURDATE()) AND MONTH(DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY)) = MONTH(CURDATE()) THEN 1 END) AS bulan_ini,
     COUNT(CASE WHEN DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) <= CURDATE() AND YEAR(DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY)) = YEAR(CURDATE()) THEN 1 END) AS tahun_ini
     FROM booking";
 
-$stmt_selesai = $koneksi->prepare($sql_selesai);
-$stmt_selesai->execute();
-$stats_selesai = $stmt_selesai->fetch(PDO::FETCH_ASSOC);
+$stmt_selesai = mysqli_prepare($koneksi, $sql_selesai);
+mysqli_stmt_execute($stmt_selesai);
+$result_stmt_selesai = mysqli_stmt_get_result($stmt_selesai);
+$stats_selesai = mysqli_fetch_assoc($result_stmt_selesai);
+mysqli_stmt_close($stmt_selesai);
 
 // Data pendapatan
 $sql_pendapatan = "SELECT SUM(total_harga) AS total FROM booking WHERE konfirmasi_pembayaran = 'Pembayaran Diterima'";
-$stmt_pendapatan = $koneksi->prepare($sql_pendapatan);
-$stmt_pendapatan->execute();
-$total_pendapatan = $stmt_pendapatan->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
+$stmt_pendapatan = mysqli_prepare($koneksi, $sql_pendapatan);
+mysqli_stmt_execute($stmt_pendapatan);
+$result_stmt_pendapatan = mysqli_stmt_get_result($stmt_pendapatan);
+$pendapatan_result = mysqli_fetch_assoc($result_stmt_pendapatan);
+$total_pendapatan = $pendapatan_result['total'] ?? 0;
+mysqli_stmt_close($stmt_pendapatan);
 
 // Data pendapatan per periode
-$sql_pendapatan_periode = "SELECT 
+$sql_pendapatan_periode = "SELECT
     SUM(CASE WHEN konfirmasi_pembayaran = 'Pembayaran Diterima' AND YEARWEEK(tanggal, 1) = YEARWEEK(CURDATE(), 1) THEN total_harga ELSE 0 END) AS minggu_ini,
     SUM(CASE WHEN konfirmasi_pembayaran = 'Pembayaran Diterima' AND YEAR(tanggal) = YEAR(CURDATE()) AND MONTH(tanggal) = MONTH(CURDATE()) THEN total_harga ELSE 0 END) AS bulan_ini,
     SUM(CASE WHEN konfirmasi_pembayaran = 'Pembayaran Diterima' AND YEAR(tanggal) = YEAR(CURDATE()) THEN total_harga ELSE 0 END) AS tahun_ini
     FROM booking";
 
-$stmt_pendapatan_periode = $koneksi->prepare($sql_pendapatan_periode);
-$stmt_pendapatan_periode->execute();
-$pendapatan_periode = $stmt_pendapatan_periode->fetch(PDO::FETCH_ASSOC);
+$stmt_pendapatan_periode = mysqli_prepare($koneksi, $sql_pendapatan_periode);
+mysqli_stmt_execute($stmt_pendapatan_periode);
+$result_stmt_pendapatan_periode = mysqli_stmt_get_result($stmt_pendapatan_periode);
+$pendapatan_periode = mysqli_fetch_assoc($result_stmt_pendapatan_periode);
+mysqli_stmt_close($stmt_pendapatan_periode);
 
 // Data mobil terlaris
-$sql_mobil = "SELECT mobil.merk AS merk, COUNT(*) AS jumlah 
-               FROM booking 
-               JOIN mobil ON booking.id_mobil = mobil.id_mobil 
-               GROUP BY mobil.id_mobil, mobil.merk 
+$sql_mobil = "SELECT mobil.merk AS merk, COUNT(*) AS jumlah
+               FROM booking
+               JOIN mobil ON booking.id_mobil = mobil.id_mobil
+               GROUP BY mobil.id_mobil, mobil.merk
                ORDER BY jumlah DESC";
-$stmt_mobil = $koneksi->prepare($sql_mobil);
-$stmt_mobil->execute();
-$data_mobil = $stmt_mobil->fetchAll(PDO::FETCH_ASSOC);
+$stmt_mobil = mysqli_prepare($koneksi, $sql_mobil);
+mysqli_stmt_execute($stmt_mobil);
+$result_stmt_mobil = mysqli_stmt_get_result($stmt_mobil);
+$data_mobil = [];
+while ($row = mysqli_fetch_assoc($result_stmt_mobil)) {
+    $data_mobil[] = $row;
+}
+mysqli_stmt_close($stmt_mobil);
 
 // Data tren bulanan
-$sql_tren = "SELECT 
+$sql_tren = "SELECT
     MONTH(tanggal) as bulan,
     COUNT(*) as jumlah_sewa,
     SUM(CASE WHEN konfirmasi_pembayaran = 'Pembayaran Diterima' THEN total_harga ELSE 0 END) as pendapatan
-    FROM booking 
+    FROM booking
     WHERE YEAR(tanggal) = YEAR(CURDATE())
     GROUP BY MONTH(tanggal)
     ORDER BY bulan";
 
-$stmt_tren = $koneksi->prepare($sql_tren);
-$stmt_tren->execute();
-$data_tren = $stmt_tren->fetchAll(PDO::FETCH_ASSOC);
+$stmt_tren = mysqli_prepare($koneksi, $sql_tren);
+mysqli_stmt_execute($stmt_tren);
+$result_stmt_tren = mysqli_stmt_get_result($stmt_tren);
+$data_tren = [];
+while ($row = mysqli_fetch_assoc($result_stmt_tren)) {
+    $data_tren[] = $row;
+}
+mysqli_stmt_close($stmt_tren);
 
 // Data status pembayaran
-$sql_status = "SELECT 
+$sql_status = "SELECT
     konfirmasi_pembayaran,
     COUNT(*) as jumlah
-    FROM booking 
+    FROM booking
     GROUP BY konfirmasi_pembayaran";
 
-$stmt_status = $koneksi->prepare($sql_status);
-$stmt_status->execute();
-$data_status = $stmt_status->fetchAll(PDO::FETCH_ASSOC);
+$stmt_status = mysqli_prepare($koneksi, $sql_status);
+mysqli_stmt_execute($stmt_status);
+$result_stmt_status = mysqli_stmt_get_result($stmt_status);
+$data_status = [];
+while ($row = mysqli_fetch_assoc($result_stmt_status)) {
+    $data_status[] = $row;
+}
+mysqli_stmt_close($stmt_status);
 ?>
 
 <!DOCTYPE html>

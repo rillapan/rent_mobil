@@ -321,7 +321,11 @@ require 'koneksi/koneksi.php';
         <!-- Cars Grid -->
         <div class="row" id="cars-container">
             <?php
-                $query = $koneksi->query('SELECT * FROM mobil ORDER BY id_mobil DESC')->fetchAll();
+                $result = mysqli_query($koneksi, 'SELECT * FROM mobil ORDER BY id_mobil DESC');
+                $query = [];
+                while ($row = mysqli_fetch_assoc($result)) {
+                    $query[] = $row;
+                }
                 foreach($query as $isi):
             ?>
             <div class="col-md-6 col-lg-4 mb-4 car-item"

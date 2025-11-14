@@ -21,7 +21,8 @@
         exit();
     }
     
-    $isi = $koneksi->query("SELECT * FROM mobil WHERE id_mobil = '$id'")->fetch();
+    $result_mobil = mysqli_query($koneksi, "SELECT * FROM mobil WHERE id_mobil = '$id'");
+    $isi = mysqli_fetch_assoc($result_mobil);
     if (!$isi) {
         echo '<script>alert("Mobil tidak ditemukan!");window.location="blog.php"</script>';
         exit();

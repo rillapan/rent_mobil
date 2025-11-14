@@ -9,9 +9,12 @@
 
     $id =  $_SESSION["USER"]["id_login"];
     $sql = "SELECT * FROM login WHERE id_login = ?";
-    $row = $koneksi->prepare($sql);
-    $row->execute(array($id));
-    $user = $row->fetch(PDO::FETCH_OBJ);
+    $row = mysqli_prepare($koneksi, $sql);
+    mysqli_stmt_bind_param($row, "i", $id);
+    mysqli_stmt_execute($row);
+    $result_stmt = mysqli_stmt_get_result($row);
+    $user = mysqli_fetch_object($result_stmt);
+    mysqli_stmt_close($row);
 
     // Query untuk mendapatkan mobil yang sedang dipesan/disewa
     $today = date('Y-m-d');
@@ -34,9 +37,15 @@
                     AND mobil.status = 'Tersedia'
                     AND DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) > ?
                     ORDER BY booking.tanggal DESC";
-    $stmt_booking = $koneksi->prepare($sql_booking);
-    $stmt_booking->execute(array($id, $today));
-    $active_bookings = $stmt_booking->fetchAll(PDO::FETCH_ASSOC);
+    $stmt_booking = mysqli_prepare($koneksi, $sql_booking);
+    mysqli_stmt_bind_param($stmt_booking, "is", $id, $today);
+    mysqli_stmt_execute($stmt_booking);
+    $result_stmt = mysqli_stmt_get_result($stmt_booking);
+    $active_bookings = [];
+    while ($row = mysqli_fetch_assoc($result_stmt)) {
+        $active_bookings[] = $row;
+    }
+    mysqli_stmt_close($stmt_booking);
 ?>
 <style>
     :root {

@@ -6,7 +6,8 @@
     if(!empty($_GET['id'])){
         $kode_booking = $_GET['id'];
         
-        $hasil = $koneksi->query("SELECT * FROM booking WHERE kode_booking = '$kode_booking'")->fetch();
+        $result_booking = mysqli_query($koneksi, "SELECT * FROM booking WHERE kode_booking = '$kode_booking'");
+        $hasil = mysqli_fetch_assoc($result_booking);
 
         if(!$hasil)
         {
@@ -14,11 +15,13 @@
             exit;
         }
         $id_booking = $hasil['id_booking'];
-        $hsl = $koneksi->query("SELECT * FROM pembayaran WHERE id_booking = '$id_booking'")->fetch();
+        $result_pembayaran = mysqli_query($koneksi, "SELECT * FROM pembayaran WHERE id_booking = '$id_booking'");
+        $hsl = mysqli_fetch_assoc($result_pembayaran);
 
 
         $id = $hasil['id_mobil'];
-        $isi = $koneksi->query("SELECT * FROM mobil WHERE id_mobil = '$id'")->fetch();
+        $result_mobil = mysqli_query($koneksi, "SELECT * FROM mobil WHERE id_mobil = '$id'");
+        $isi = mysqli_fetch_assoc($result_mobil);
     } // Add closing brace here for the if(!empty($_GET['id'])) block
 ?>
 <br>
@@ -145,7 +148,7 @@
                                     <td>:</td>
                                     <td>
                                         <select class="form-select" name="status">
-                                            <option value="Tersedia" <?= ($isi['status'] == 'Tersedia') ? 'selected' : '';?>>Tersedia (Kembali)</option>
+                                               <option value="Tersedia" <?= ($isi['status'] == 'Tersedia') ? 'selected' : '';?>>Tersedia (Kembali)</option>
                                             <option value="Tidak Tersedia" <?= ($isi['status'] == 'Tidak Tersedia') ? 'selected' : '';?>>Tidak Tersedia (Pinjam)</option>
                                         </select>
                                     </td>

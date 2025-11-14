@@ -9,19 +9,27 @@
     $id = $_GET['id'];
 
     $sql = "SELECT * FROM mobil WHERE id_mobil = ?";
-    $row = $koneksi->prepare($sql);
-    $row->execute(array($id));
-
-    $hasil = $row->fetch();
+    $row = mysqli_prepare($koneksi, $sql);
+    mysqli_stmt_bind_param($row, "i", $id);
+    mysqli_stmt_execute($row);
+    $result_stmt = mysqli_stmt_get_result($row);
+    $hasil = mysqli_fetch_assoc($result_stmt);
+    mysqli_stmt_close($row);
     if(!$hasil){
         echo '<script>alert("Mobil tidak ditemukan !");window.location="mobil.php";</script>';
         exit;
     }
 
     $sql_gambar = "SELECT * FROM mobil_gambar WHERE id_mobil = ?";
-    $row_gambar = $koneksi->prepare($sql_gambar);
-    $row_gambar->execute(array($id));
-    $hasil_gambar = $row_gambar->fetchAll(PDO::FETCH_OBJ);
+    $row_gambar = mysqli_prepare($koneksi, $sql_gambar);
+    mysqli_stmt_bind_param($row_gambar, "i", $id);
+    mysqli_stmt_execute($row_gambar);
+    $result_stmt_gambar = mysqli_stmt_get_result($row_gambar);
+    $hasil_gambar = [];
+    while ($row = mysqli_fetch_object($result_stmt_gambar)) {
+        $hasil_gambar[] = $row;
+    }
+    mysqli_stmt_close($row_gambar);
 ?>
 <style>
     :root {

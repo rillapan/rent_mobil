@@ -11,9 +11,12 @@
 
     $id_supir = $_GET['id'];
     $sql = "SELECT * FROM supir WHERE id_supir = ?";
-    $row = $koneksi->prepare($sql);
-    $row->execute([$id_supir]);
-    $supir = $row->fetch(PDO::FETCH_ASSOC);
+    $row = mysqli_prepare($koneksi, $sql);
+    mysqli_stmt_bind_param($row, "i", $id_supir);
+    mysqli_stmt_execute($row);
+    $result_stmt = mysqli_stmt_get_result($row);
+    $supir = mysqli_fetch_assoc($result_stmt);
+    mysqli_stmt_close($row);
 
     if (!$supir) {
         header('Location: supir.php');

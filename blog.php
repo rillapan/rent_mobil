@@ -6,11 +6,22 @@
     if(isset($_GET['cari']))
     {
         $cari = strip_tags($_GET['cari']);
-        $query =  $koneksi -> prepare('SELECT * FROM mobil WHERE merk LIKE ? ORDER BY id_mobil DESC');
-        $query->execute(['%'.$cari.'%']);
-        $query = $query->fetchAll();
+        $stmt = mysqli_prepare($koneksi, 'SELECT * FROM mobil WHERE merk LIKE ? ORDER BY id_mobil DESC');
+        $search_term = '%' . $cari . '%';
+        mysqli_stmt_bind_param($stmt, "s", $search_term);
+        mysqli_stmt_execute($stmt);
+        $result_stmt = mysqli_stmt_get_result($stmt);
+        $query = [];
+        while ($row = mysqli_fetch_assoc($result_stmt)) {
+            $query[] = $row;
+        }
+        mysqli_stmt_close($stmt);
     }else{
-        $query =  $koneksi -> query('SELECT * FROM mobil ORDER BY id_mobil DESC')->fetchAll();
+        $result = mysqli_query($koneksi, 'SELECT * FROM mobil ORDER BY id_mobil DESC');
+        $query = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $query[] = $row;
+        }
     }
 ?>
 <style>

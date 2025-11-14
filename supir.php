@@ -4,7 +4,11 @@ require 'koneksi/koneksi.php';
 include 'header.php';
 
 // Ambil daftar supir yang tersedia
-$supir = $koneksi->query("SELECT * FROM supir WHERE status = 'Tersedia' ORDER BY nama_supir ASC")->fetchAll();
+$result = mysqli_query($koneksi, "SELECT * FROM supir WHERE status = 'Tersedia' ORDER BY nama_supir ASC");
+$supir = [];
+while ($row = mysqli_fetch_assoc($result)) {
+    $supir[] = $row;
+}
 ?>
 
 <div class="container my-4">

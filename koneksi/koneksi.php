@@ -17,21 +17,18 @@
     $host = 'localhost';
     $dbname = 'codekop_free_rental_mobil';
 
-    try {
-        $koneksi = new PDO("mysql:host=$host;dbname=$dbname", $user, $pass);
-        $koneksi->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    } catch(PDOException $e) {
-        die("Connection failed: " . $e->getMessage());
+    $koneksi = mysqli_connect($host, $user, $pass, $dbname);
+    if (!$koneksi) {
+        die("Connection failed: " . mysqli_connect_error());
     }
 
     global $url;
     $url = "http://localhost/rental_mobil-master/";
 
     $sql_web = "SELECT * FROM infoweb WHERE id = 1";
-    $stmt_web = $koneksi->prepare($sql_web);
-    $stmt_web->execute();
+    $result_web = mysqli_query($koneksi, $sql_web);
     global $info_web;
-    $info_web = $stmt_web->fetch(PDO::FETCH_OBJ);
+    $info_web = mysqli_fetch_object($result_web);
 
     
     

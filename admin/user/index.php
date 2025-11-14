@@ -29,9 +29,14 @@
                         <?php
                             $no = 1;
                             $sql = "SELECT * FROM login WHERE level = 'Pengguna' ORDER BY id_login DESC";
-                            $stmt = $koneksi->prepare($sql);
-                            $stmt->execute();
-                            $hasil = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            $stmt = mysqli_prepare($koneksi, $sql);
+                            mysqli_stmt_execute($stmt);
+                            $result_stmt = mysqli_stmt_get_result($stmt);
+                            $hasil = [];
+                            while ($row = mysqli_fetch_assoc($result_stmt)) {
+                                $hasil[] = $row;
+                            }
+                            mysqli_stmt_close($stmt);
                             foreach($hasil as $r){
                         ?>
                         <tr>

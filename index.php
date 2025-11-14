@@ -8,9 +8,12 @@ if (isset($_POST['login'])) {
     $password = $_POST['password'];
 
     // Query untuk mencari user
-    $query = $koneksi->prepare("SELECT * FROM login WHERE username = ?");
-    $query->execute([$username]);
-    $user = $query->fetch();
+    $query = mysqli_prepare($koneksi, "SELECT * FROM login WHERE username = ?");
+    mysqli_stmt_bind_param($query, "s", $username);
+    mysqli_stmt_execute($query);
+    $result_stmt = mysqli_stmt_get_result($query);
+    $user = mysqli_fetch_assoc($result_stmt);
+    mysqli_stmt_close($query);
 
     if ($user) {
         // Verifikasi password
@@ -1335,7 +1338,11 @@ if (isset($_POST['login'])) {
             <div id="carouselId" class="carousel slide" data-ride="carousel">
                 <ol class="carousel-indicators">
                     <?php 
-                        $querymobil = $koneksi->query('SELECT * FROM mobil ORDER BY id_mobil DESC')->fetchAll();
+                        $result_mobil = mysqli_query($koneksi, 'SELECT * FROM mobil ORDER BY id_mobil DESC');
+                        $querymobil = [];
+                        while ($row = mysqli_fetch_assoc($result_mobil)) {
+                            $querymobil[] = $row;
+                        }
                         $no = 1;
                         foreach($querymobil as $isi):
                     ?>

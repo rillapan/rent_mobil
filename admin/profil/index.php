@@ -6,9 +6,12 @@ include '../header.php';
 
 $id_login = $_SESSION["USER"]["id_login"];
 $sql_profil = "SELECT * FROM login WHERE id_login = ?";
-$row_profil = $koneksi->prepare($sql_profil);
-$row_profil->execute(array($id_login));
-$profil_admin = $row_profil->fetch(PDO::FETCH_OBJ);
+$row_profil = mysqli_prepare($koneksi, $sql_profil);
+mysqli_stmt_bind_param($row_profil, "i", $id_login);
+mysqli_stmt_execute($row_profil);
+$result_stmt = mysqli_stmt_get_result($row_profil);
+$profil_admin = mysqli_fetch_object($result_stmt);
+mysqli_stmt_close($row_profil);
 ?>
 <div class="container mt-4" style="max-width: 900px;">
     <div class="row g-4">

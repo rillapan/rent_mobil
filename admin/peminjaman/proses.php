@@ -11,17 +11,17 @@ if($_GET['id'] == 'konfirmasi')
 
     // Update status mobil
     $sql = "UPDATE `mobil` SET `status`= ? WHERE id_mobil= ?";
-    $stmt = $koneksi->prepare($sql);
-    $stmt->bindParam(1, $status);
-    $stmt->bindParam(2, $id_mobil);
-    $mobil_updated = $stmt->execute();
+    $stmt = mysqli_prepare($koneksi, $sql);
+    mysqli_stmt_bind_param($stmt, "si", $status, $id_mobil);
+    $mobil_updated = mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
 
     // Update status pengembalian di tabel booking
     $sql_booking = "UPDATE `booking` SET `status_pengembalian`= ? WHERE kode_booking= ?";
-    $stmt_booking = $koneksi->prepare($sql_booking);
-    $stmt_booking->bindParam(1, $status_pengembalian);
-    $stmt_booking->bindParam(2, $kode_booking);
-    $booking_updated = $stmt_booking->execute();
+    $stmt_booking = mysqli_prepare($koneksi, $sql_booking);
+    mysqli_stmt_bind_param($stmt_booking, "ss", $status_pengembalian, $kode_booking);
+    $booking_updated = mysqli_stmt_execute($stmt_booking);
+    mysqli_stmt_close($stmt_booking);
 
     // Jika status pengembalian adalah 'Dikembalikan', insert ke tabel pengembalian dan update status supir
     if ($status_pengembalian == 'Dikembalikan') {
@@ -29,25 +29,27 @@ if($_GET['id'] == 'konfirmasi')
         $denda = $_POST['denda'] ?? 0;
 
         $sql_pengembalian = "INSERT INTO `pengembalian` (`kode_booking`, `tanggal`, `denda`) VALUES (?, ?, ?)";
-        $stmt_pengembalian = $koneksi->prepare($sql_pengembalian);
-        $stmt_pengembalian->bindParam(1, $kode_booking);
-        $stmt_pengembalian->bindParam(2, $tanggal_pengembalian);
-        $stmt_pengembalian->bindParam(3, $denda);
-        $pengembalian_inserted = $stmt_pengembalian->execute();
+        $stmt_pengembalian = mysqli_prepare($koneksi, $sql_pengembalian);
+        mysqli_stmt_bind_param($stmt_pengembalian, "ssd", $kode_booking, $tanggal_pengembalian, $denda);
+        $pengembalian_inserted = mysqli_stmt_execute($stmt_pengembalian);
+        mysqli_stmt_close($stmt_pengembalian);
 
         // Update status supir kembali ke 'Tersedia' jika ada supir yang digunakan
         $supir_updated = true;
         $sql_supir = "SELECT id_supir FROM booking WHERE kode_booking = ?";
-        $stmt_supir_check = $koneksi->prepare($sql_supir);
-        $stmt_supir_check->bindParam(1, $kode_booking);
-        $stmt_supir_check->execute();
-        $booking_data = $stmt_supir_check->fetch(PDO::FETCH_ASSOC);
+        $stmt_supir_check = mysqli_prepare($koneksi, $sql_supir);
+        mysqli_stmt_bind_param($stmt_supir_check, "s", $kode_booking);
+        mysqli_stmt_execute($stmt_supir_check);
+        $result_stmt_supir = mysqli_stmt_get_result($stmt_supir_check);
+        $booking_data = mysqli_fetch_assoc($result_stmt_supir);
+        mysqli_stmt_close($stmt_supir_check);
 
         if (!empty($booking_data['id_supir'])) {
             $sql_update_supir = "UPDATE supir SET status = 'Tersedia' WHERE id_supir = ?";
-            $stmt_update_supir = $koneksi->prepare($sql_update_supir);
-            $stmt_update_supir->bindParam(1, $booking_data['id_supir']);
-            $supir_updated = $stmt_update_supir->execute();
+            $stmt_update_supir = mysqli_prepare($koneksi, $sql_update_supir);
+            mysqli_stmt_bind_param($stmt_update_supir, "i", $booking_data['id_supir']);
+            $supir_updated = mysqli_stmt_execute($stmt_update_supir);
+            mysqli_stmt_close($stmt_update_supir);
         }
 
         if ($mobil_updated && $booking_updated && $pengembalian_inserted && $supir_updated) {

@@ -14,15 +14,20 @@
  
     // select untuk panggil nama admin
     $id_login = $_SESSION['USER']['id_login'];
-    
-    $row = $koneksi->prepare("SELECT * FROM login WHERE id_login=?");
-    $row->execute(array($id_login));
-    $hasil_login = $row->fetch();
+
+    $row = mysqli_prepare($koneksi, "SELECT * FROM login WHERE id_login=?");
+    mysqli_stmt_bind_param($row, "i", $id_login);
+    mysqli_stmt_execute($row);
+    $result_stmt = mysqli_stmt_get_result($row);
+    $hasil_login = mysqli_fetch_assoc($result_stmt);
+    mysqli_stmt_close($row);
 
     $sql = "SELECT * FROM infoweb WHERE id = 1";
-    $row = $koneksi->prepare($sql);
-    $row->execute();
-    $info_web = $row->fetch(PDO::FETCH_OBJ);
+    $row = mysqli_prepare($koneksi, $sql);
+    mysqli_stmt_execute($row);
+    $result_stmt = mysqli_stmt_get_result($row);
+    $info_web = mysqli_fetch_object($result_stmt);
+    mysqli_stmt_close($row);
 ?>
 <!doctype html>
 <html lang="en">

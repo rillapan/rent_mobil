@@ -21,13 +21,16 @@ if (isset($_GET['id']) && $_GET['id'] === 'approve_refund' && $_SERVER['REQUEST_
     }
 
     // Ambil data refund beserta booking
-    $stmt_refund = $koneksi->prepare("SELECT rr.*, b.id_login AS booking_user, b.id_booking, b.kode_booking, b.total_harga, l.nama_pengguna, l.no_hp 
+    $stmt_refund = mysqli_prepare($koneksi, "SELECT rr.*, b.id_login AS booking_user, b.id_booking, b.kode_booking, b.total_harga, l.nama_pengguna, l.no_hp
         FROM refund_requests rr
         JOIN booking b ON rr.id_booking = b.id_booking
         LEFT JOIN login l ON b.id_login = l.id_login
         WHERE rr.id = ?");
-    $stmt_refund->execute([$refund_id]);
-    $refund = $stmt_refund->fetch(PDO::FETCH_ASSOC);
+    mysqli_stmt_bind_param($stmt_refund, "i", $refund_id);
+    mysqli_stmt_execute($stmt_refund);
+    $result_stmt_refund = mysqli_stmt_get_result($stmt_refund);
+    $refund = mysqli_fetch_assoc($result_stmt_refund);
+    mysqli_stmt_close($stmt_refund);
 
     if (!$refund) {
         header('Location: index.php?status=refunderror');
@@ -38,20 +41,18 @@ if (isset($_GET['id']) && $_GET['id'] === 'approve_refund' && $_SERVER['REQUEST_
     $nominal_formatted = number_format($nominal_refund, 2, '.', '');
 
     // Update data refund
-    $stmt_update = $koneksi->prepare("UPDATE refund_requests 
-        SET status = ?, nominal_refund = ?, catatan_admin = ?, processed_at = NOW(), admin_id = ? 
+    $stmt_update = mysqli_prepare($koneksi, "UPDATE refund_requests
+        SET status = ?, nominal_refund = ?, catatan_admin = ?, processed_at = NOW(), admin_id = ?
         WHERE id = ?");
-    $stmt_update->execute([
-        $status_refund,
-        $nominal_formatted,
-        $catatan_admin,
-        $admin_id,
-        $refund_id
-    ]);
+    mysqli_stmt_bind_param($stmt_update, "ssdii", $status_refund, $nominal_formatted, $catatan_admin, $admin_id, $refund_id);
+    mysqli_stmt_execute($stmt_update);
+    mysqli_stmt_close($stmt_update);
 
     // Update status booking
-    $stmt_update_booking = $koneksi->prepare("UPDATE booking SET konfirmasi_pembayaran = ? WHERE id_booking = ?");
-    $stmt_update_booking->execute([$status_refund, $refund['id_booking']]);
+    $stmt_update_booking = mysqli_prepare($koneksi, "UPDATE booking SET konfirmasi_pembayaran = ? WHERE id_booking = ?");
+    mysqli_stmt_bind_param($stmt_update_booking, "si", $status_refund, $refund['id_booking']);
+    mysqli_stmt_execute($stmt_update_booking);
+    mysqli_stmt_close($stmt_update_booking);
 
     // Kirim notifikasi ke pelanggan
     $total_pembayaran = $refund['total_pembayaran'] ?: $refund['total_harga'];
@@ -76,12 +77,10 @@ if (isset($_GET['id']) && $_GET['id'] === 'approve_refund' && $_SERVER['REQUEST_
 </div>
 HTML;
 
-    $stmt_notif = $koneksi->prepare("INSERT INTO notifikasi (id_login, id_booking, pesan, status_baca) VALUES (?, ?, ?, 0)");
-    $stmt_notif->execute([
-        $refund['id_login'],
-        $refund['id_booking'],
-        $pesan_notifikasi
-    ]);
+    $stmt_notif = mysqli_prepare($koneksi, "INSERT INTO notifikasi (id_login, id_booking, pesan, status_baca) VALUES (?, ?, ?, 0)");
+    mysqli_stmt_bind_param($stmt_notif, "iisi", $refund['id_login'], $refund['id_booking'], $pesan_notifikasi, 0);
+    mysqli_stmt_execute($stmt_notif);
+    mysqli_stmt_close($stmt_notif);
 
     header('Location: index.php?status=refundapproved');
     exit();

@@ -10,10 +10,12 @@
         exit();
     }
     $kode_booking = $_GET['id'];
-    $hasil = $koneksi->query("SELECT * FROM booking WHERE kode_booking = '$kode_booking'")->fetch();
+    $result_booking = mysqli_query($koneksi, "SELECT * FROM booking WHERE kode_booking = '$kode_booking'");
+    $hasil = mysqli_fetch_assoc($result_booking);
 
     $id = $hasil['id_mobil'];
-    $isi = $koneksi->query("SELECT * FROM mobil WHERE id_mobil = '$id'")->fetch();
+    $result_mobil = mysqli_query($koneksi, "SELECT * FROM mobil WHERE id_mobil = '$id'");
+    $isi = mysqli_fetch_assoc($result_mobil);
 ?>
 <style>
     .card-header {

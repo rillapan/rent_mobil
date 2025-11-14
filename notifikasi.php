@@ -11,19 +11,27 @@ if (!isset($_SESSION['USER'])) {
 $id_login_user = $_SESSION['USER']['id_login'];
 
 // Tandai semua notifikasi yang belum dibaca sebagai sudah dibaca
-$stmt_mark_read = $koneksi->prepare("UPDATE notifikasi SET status_baca = 1 WHERE id_login = ? AND status_baca = 0");
-$stmt_mark_read->execute([$id_login_user]);
+$stmt_mark_read = mysqli_prepare($koneksi, "UPDATE notifikasi SET status_baca = 1 WHERE id_login = ? AND status_baca = 0");
+mysqli_stmt_bind_param($stmt_mark_read, "i", $id_login_user);
+mysqli_stmt_execute($stmt_mark_read);
+mysqli_stmt_close($stmt_mark_read);
 
 // Ambil semua notifikasi untuk user yang sedang login dengan data booking
-$stmt_notifikasi = $koneksi->prepare("
-    SELECT n.*, b.kode_booking, b.konfirmasi_pembayaran 
-    FROM notifikasi n 
-    LEFT JOIN booking b ON n.id_booking = b.id_booking 
-    WHERE n.id_login = ? 
+$stmt_notifikasi = mysqli_prepare($koneksi, "
+    SELECT n.*, b.kode_booking, b.konfirmasi_pembayaran
+    FROM notifikasi n
+    LEFT JOIN booking b ON n.id_booking = b.id_booking
+    WHERE n.id_login = ?
     ORDER BY n.created_at DESC
 ");
-$stmt_notifikasi->execute([$id_login_user]);
-$notifikasi = $stmt_notifikasi->fetchAll(PDO::FETCH_ASSOC);
+mysqli_stmt_bind_param($stmt_notifikasi, "i", $id_login_user);
+mysqli_stmt_execute($stmt_notifikasi);
+$result_stmt = mysqli_stmt_get_result($stmt_notifikasi);
+$notifikasi = [];
+while ($row = mysqli_fetch_assoc($result_stmt)) {
+    $notifikasi[] = $row;
+}
+mysqli_stmt_close($stmt_notifikasi);
 
 ?>
 

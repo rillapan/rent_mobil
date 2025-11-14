@@ -12,12 +12,18 @@
 
     $id_login = $_SESSION['USER']['id_login'];
 
-    $sql = "SELECT mobil.merk, booking.* FROM booking JOIN mobil ON 
+    $sql = "SELECT mobil.merk, booking.* FROM booking JOIN mobil ON
             booking.id_mobil=mobil.id_mobil WHERE booking.id_login = ? ORDER BY id_booking DESC";
-    
-    $row = $koneksi->prepare($sql);
-    $row->execute(array($id_login));
-    $hasil = $row->fetchAll();
+
+    $row = mysqli_prepare($koneksi, $sql);
+    mysqli_stmt_bind_param($row, "i", $id_login);
+    mysqli_stmt_execute($row);
+    $result_stmt = mysqli_stmt_get_result($row);
+    $hasil = [];
+    while ($row_data = mysqli_fetch_assoc($result_stmt)) {
+        $hasil[] = $row_data;
+    }
+    mysqli_stmt_close($row);
 ?>
 
 <br>

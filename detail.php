@@ -4,13 +4,20 @@
     require 'koneksi/koneksi.php';
     include 'header.php';
     $id = strip_tags($_GET['id']);
-    $hasil = $koneksi->query("SELECT * FROM mobil WHERE id_mobil = '$id'")->fetch();
+    $hasil = mysqli_query($koneksi, "SELECT * FROM mobil WHERE id_mobil = '$id'");
+    $hasil = mysqli_fetch_assoc($hasil);
 
     // Fetch additional images
     $sql_gambar_tambahan = "SELECT nama_gambar FROM mobil_gambar WHERE id_mobil = ?";
-    $stmt_gambar_tambahan = $koneksi->prepare($sql_gambar_tambahan);
-    $stmt_gambar_tambahan->execute([$id]);
-    $gambar_tambahan = $stmt_gambar_tambahan->fetchAll(PDO::FETCH_COLUMN);
+    $stmt_gambar_tambahan = mysqli_prepare($koneksi, $sql_gambar_tambahan);
+    mysqli_stmt_bind_param($stmt_gambar_tambahan, "i", $id);
+    mysqli_stmt_execute($stmt_gambar_tambahan);
+    $result_stmt = mysqli_stmt_get_result($stmt_gambar_tambahan);
+    $gambar_tambahan = [];
+    while ($row = mysqli_fetch_assoc($result_stmt)) {
+        $gambar_tambahan[] = $row['nama_gambar'];
+    }
+    mysqli_stmt_close($stmt_gambar_tambahan);
 ?>
 <style>
     .btn-primary {
