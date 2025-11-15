@@ -73,10 +73,11 @@ if($_GET['id'] == 'daftar')
     $pass = md5($_POST['pass']);
     $level = 'pengguna';
     $no_hp = $_POST['no_hp'];
+    $email = $_POST['email'];
 
-    $stmt = mysqli_prepare($koneksi, "SELECT * FROM login WHERE username = ?");
+    $stmt = mysqli_prepare($koneksi, "SELECT * FROM login WHERE username = ? OR email = ?");
 
-    mysqli_stmt_bind_param($stmt, "s", $user);
+    mysqli_stmt_bind_param($stmt, "ss", $user, $email);
 
     mysqli_stmt_execute($stmt);
 
@@ -98,7 +99,7 @@ if($_GET['id'] == 'daftar')
 
     {
 
-        header('Location: ../index.php?status=registerfailed');
+        header('Location: ../register.php?status=registerfailed');
 
     }
 
@@ -106,19 +107,19 @@ if($_GET['id'] == 'daftar')
 
     {
 
-        $sql = "INSERT INTO `login`(`nama_pengguna`, `username`, `password`, `level`, `no_hp`)
+        $sql = "INSERT INTO `login`(`nama_pengguna`, `username`, `password`, `level`, `no_hp`, `email`)
 
-                 VALUES (?,?,?,?,?)";
+                 VALUES (?,?,?,?,?,?)";
 
         $stmt_insert = mysqli_prepare($koneksi, $sql);
 
-        mysqli_stmt_bind_param($stmt_insert, "sssss", $nama, $user, $pass, $level, $no_hp);
+        mysqli_stmt_bind_param($stmt_insert, "ssssss", $nama, $user, $pass, $level, $no_hp, $email);
 
         mysqli_stmt_execute($stmt_insert);
 
         mysqli_stmt_close($stmt_insert);
 
-        header('Location: ../index.php?status=registersuccess');
+        header('Location: ../register.php?status=registersuccess');
 
     }
 

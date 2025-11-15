@@ -11,7 +11,7 @@
             exit();
         }
     }
- 
+
     // select untuk panggil nama admin
     $id_login = $_SESSION['USER']['id_login'];
 
@@ -38,25 +38,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="<?= $url;?>assets/css/bootstrap.css" >
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
     <style>
       :root {
-        --primary: #1A237E; 
+        --primary: #1A237E;
         --primary-dark: #1A3CC9;
         --secondary: #FF6B35;
         --light: #F8F9FA;
         --dark: #212529;
         --gray: #6C757D;
       }
-      
+
       body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         color: #333;
         background-color: #f8f9fa;
         padding-top: 80px; /* Memberi ruang untuk header fixed */
       }
-      
+
       /* Modern Header Styling */
       .modern-header {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
@@ -70,22 +70,22 @@
         z-index: 1030;
         border-radius: 0;
       }
-      
+
       .brand-name {
         font-weight: 700;
         font-size: 1.8rem;
         letter-spacing: 0.5px;
         text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
       }
-      
+
       .brand-name span {
         color: var(--secondary);
       }
-      
+
       .search-form {
         position: relative;
       }
-      
+
       .search-form .form-control {
         border-radius: 50px;
         padding-left: 20px;
@@ -93,7 +93,7 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         height: 45px;
       }
-      
+
       .search-form .btn {
         position: absolute;
         right: 5px;
@@ -106,13 +106,13 @@
         font-weight: 600;
         transition: all 0.3s ease;
       }
-      
+
       .search-form .btn:hover {
         background: #e55a2b;
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
       }
-      
+
       /* Modern Navigation */
       .navbar-modern {
         background: white;
@@ -121,7 +121,7 @@
         padding: 0.5rem 1rem;
         margin-bottom: 30px;
       }
-      
+
       .navbar-modern .navbar-nav .nav-link {
         color: var(--dark);
         font-weight: 500;
@@ -130,25 +130,25 @@
         margin: 0 5px;
         transition: all 0.3s ease;
       }
-      
+
       .navbar-modern .navbar-nav .nav-link:hover,
       .navbar-modern .navbar-nav .nav-link.active {
         background: var(--primary);
         color: white;
         transform: translateY(-2px);
       }
-      
+
       .navbar-modern .navbar-toggler {
         border: none;
         outline: none;
         color: white;
         font-size: 1.5rem;
       }
-      
+
       .navbar-modern .navbar-toggler:focus {
         box-shadow: none;
       }
-      
+
       .user-greeting {
         background: linear-gradient(135deg, var(--secondary) 0%, #e55a2b 100%);
         color: white;
@@ -158,7 +158,7 @@
         font-weight: 500;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       }
-      
+
       .logout-btn {
         background: transparent;
         color: var(--gray);
@@ -168,14 +168,14 @@
         font-weight: 500;
         transition: all 0.3s ease;
       }
-      
+
       .logout-btn:hover {
         background: #dc3545;
         color: white;
         border-color: #dc3545;
         transform: translateY(-2px);
       }
-      
+
       /* Sidebar styling for mobile */
       .sidebar {
         position: fixed;
@@ -236,6 +236,35 @@
         width: 20px;
         text-align: center;
       }
+
+      /* Submenu styling for sidebar */
+      .submenu {
+        list-style: none;
+        padding-left: 2rem;
+        display: none;
+        margin: 0;
+      }
+
+      .submenu .nav-link {
+        padding: 0.5rem 1.5rem;
+        font-size: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        margin-bottom: 0.25rem;
+      }
+
+      .submenu.open {
+        display: block;
+      }
+
+      .submenu-toggle .submenu-icon {
+        float: right;
+        transition: transform 0.3s ease;
+      }
+
+      .submenu-toggle.open .submenu-icon {
+        transform: rotate(180deg);
+      }
       .sidebar-overlay {
         display: none;
         position: fixed;
@@ -253,26 +282,26 @@
         font-size: 1.5rem;
         cursor: pointer;
       }
-      
+
       /* Responsive adjustments */
       @media (max-width: 992px) {
         .desktop-nav {
           display: none;
         }
-        
+
         .mobile-menu-btn {
           display: block;
         }
-        
+
         .brand-name {
           font-size: 1.5rem;
         }
-        
+
         .modern-header .col-md-4 h4 {
           display: none;
         }
       }
-      
+
       @media (min-width: 993px) {
         .mobile-menu-btn { display: none !important; }
         .sidebar { top: 0; }
@@ -281,24 +310,24 @@
         body.sidebar-open { margin-left: 280px; }
         body.sidebar-open .modern-header { padding-left: 280px; }
       }
-      
+
       @media (max-width: 768px) {
         .modern-header {
           padding: 0.8rem 0;
         }
-        
+
         .brand-name {
           font-size: 1.4rem;
         }
-        
+
         .search-form {
           margin-top: 10px;
         }
-        
+
         .navbar-modern .navbar-nav .nav-link {
           margin: 3px 0;
         }
-        
+
         .user-greeting, .logout-btn {
           margin: 5px 0;
           display: inline-block;
@@ -347,14 +376,13 @@
           </a>
         </li>
         <li class="nav-item">
-          <a class="nav-link <?php if($title_web == 'Daftar Mobil' || $title_web == 'Tambah Mobil' || $title_web == 'Edit Mobil'){ echo 'active';}?>" href="<?php echo $url;?>admin/mobil/mobil.php">
-            <i class="fas fa-car"></i> Management Mobil
+          <a class="nav-link submenu-toggle <?php if($title_web == 'Daftar Mobil' || $title_web == 'Tambah Mobil' || $title_web == 'Edit Mobil' || $title_web == 'Kelola Merk Mobil'){ echo 'active';}?>" href="#" id="managementMobilToggle">
+            <i class="fas fa-car"></i> Management Mobil <i class="fas fa-chevron-down submenu-icon"></i>
           </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link <?php if($title_web == 'Kelola Merk Mobil'){ echo 'active';}?>" href="<?php echo $url;?>admin/mobil/merk.php">
-            <i class="fas fa-tags"></i> Merk Mobil
-          </a>
+          <ul class="submenu" id="managementMobilSubmenu">
+            <li><a class="nav-link <?php if($title_web == 'Daftar Mobil' || $title_web == 'Tambah Mobil' || $title_web == 'Edit Mobil'){ echo 'active';}?>" href="<?php echo $url;?>admin/mobil/mobil.php"><i class="fas fa-list"></i> Daftar Mobil</a></li>
+            <li><a class="nav-link <?php if($title_web == 'Kelola Merk Mobil'){ echo 'active';}?>" href="<?php echo $url;?>admin/mobil/merk.php"><i class="fas fa-tags"></i> Merk Mobil</a></li>
+          </ul>
         </li>
         <li class="nav-item">
           <a class="nav-link <?php if($title_web == 'Daftar Supir' || $title_web == 'Tambah Supir' || $title_web == 'Edit Supir'){ echo 'active';}?>" href="<?php echo $url;?>admin/supir/supir.php">
@@ -377,6 +405,11 @@
             <i class="fas fa-undo"></i> Pengajuan Refund
           </a>
         </li>
+                <li class="nav-item">
+          <a class="nav-link <?php if($title_web == 'Kelola Metode Pembayaran'){ echo 'active';}?>" href="<?php echo $url;?>admin/pengaturan/payment_methods.php">
+            <i class="fas fa-credit-card"></i> Metode Pembayaran
+          </a>
+        </li>
         <li class="nav-item">
           <a class="nav-link <?php if($title_web == 'Laporan Transaksi'){ echo 'active';}?>" href="<?php echo $url;?>admin/laporan/index.php">
             <i class="fas fa-chart-pie"></i> Laporan Transaksi
@@ -387,11 +420,7 @@
             <i class="fas fa-cog"></i> Info Website
           </a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link <?php if($title_web == 'Kelola Metode Pembayaran'){ echo 'active';}?>" href="<?php echo $url;?>admin/pengaturan/payment_methods.php">
-            <i class="fas fa-credit-card"></i> Metode Pembayaran
-          </a>
-        </li>
+
         <li class="nav-item">
           <a class="nav-link" href="<?php echo $url;?>admin/profil/index.php">
             <i class="fas fa-user"></i> Hallo, <?php echo $hasil_login['nama_pengguna'];?>
@@ -417,11 +446,12 @@
             <li class="nav-item <?php if($title_web == 'User'){ echo 'active';}?>">
               <a class="nav-link" href="<?php echo $url;?>admin/user/index.php">User / Pelanggan</a>
             </li>
-            <li class="nav-item <?php if($title_web == 'Daftar Mobil' || $title_web == 'Tambah Mobil' || $title_web == 'Edit Mobil'){ echo 'active';}?>">
-              <a class="nav-link" href="<?php echo $url;?>admin/mobil/mobil.php">Management Mobil</a>
-            </li>
-            <li class="nav-item <?php if($title_web == 'Kelola Merk Mobil'){ echo 'active';}?>">
-              <a class="nav-link" href="<?php echo $url;?>admin/mobil/merk.php">Merk Mobil</a>
+            <li class="nav-item dropdown <?php if($title_web == 'Daftar Mobil' || $title_web == 'Tambah Mobil' || $title_web == 'Edit Mobil' || $title_web == 'Kelola Merk Mobil'){ echo 'active';}?>">
+              <a class="nav-link dropdown-toggle" href="#" id="managementMobilDropdownDesktop" role="button" data-bs-toggle="dropdown" aria-expanded="false">Management Mobil</a>
+              <ul class="dropdown-menu" aria-labelledby="managementMobilDropdownDesktop">
+                <li><a class="dropdown-item <?php if($title_web == 'Daftar Mobil' || $title_web == 'Tambah Mobil' || $title_web == 'Edit Mobil'){ echo 'active';}?>" href="<?php echo $url;?>admin/mobil/mobil.php">Daftar Mobil</a></li>
+                <li><a class="dropdown-item <?php if($title_web == 'Kelola Merk Mobil'){ echo 'active';}?>" href="<?php echo $url;?>admin/mobil/merk.php">Merk Mobil</a></li>
+              </ul>
             </li>
             <li class="nav-item <?php if($title_web == 'Daftar Supir' || $title_web == 'Tambah Supir' || $title_web == 'Edit Supir'){ echo 'active';}?>">
               <a class="nav-link" href="<?php echo $url;?>admin/supir/supir.php">Management Supir</a>
@@ -435,11 +465,11 @@
             <li class="nav-item <?php if($title_web == 'Pengajuan Refund'){ echo 'active';}?>">
               <a class="nav-link" href="<?php echo $url;?>admin/refund/index.php">Pengajuan Refund</a>
             </li>
-            <li class="nav-item <?php if($title_web == 'Pengaturan Website'){ echo 'active';}?>">
-              <a class="nav-link" href="<?php echo $url;?>admin/pengaturan/index.php">Info Website</a>
-            </li>
             <li class="nav-item <?php if($title_web == 'Kelola Metode Pembayaran'){ echo 'active';}?>">
               <a class="nav-link" href="<?php echo $url;?>admin/pengaturan/payment_methods.php">Metode Pembayaran</a>
+            </li>
+            <li class="nav-item <?php if($title_web == 'Pengaturan Website'){ echo 'active';}?>">
+              <a class="nav-link" href="<?php echo $url;?>admin/pengaturan/index.php">Info Website</a>
             </li>
             <li class="nav-item <?php if($title_web == 'Laporan Transaksi'){ echo 'active';}?>">
               <a class="nav-link" href="<?php echo $url;?>admin/laporan/index.php">Laporan Transaksi</a>
@@ -462,26 +492,23 @@
       <!-- Tempatkan konten halaman Anda di sini -->
     </div>
 
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
-    
+
     <script>
       // Toggle sidebar
       document.getElementById('mobileMenuBtn').addEventListener('click', function() {
         document.getElementById('sidebar').classList.add('open');
         document.getElementById('sidebarOverlay').classList.add('open');
       });
-      
+
       document.getElementById('closeSidebar').addEventListener('click', function() {
         document.getElementById('sidebar').classList.remove('open');
         document.getElementById('sidebarOverlay').classList.remove('open');
         document.body.classList.remove('sidebar-open');
       });
-      
+
       document.getElementById('sidebarOverlay').addEventListener('click', function() {
         document.getElementById('sidebar').classList.remove('open');
         this.classList.remove('open');
@@ -496,7 +523,18 @@
           document.body.classList.toggle('sidebar-open', isOpen);
         });
       }
-      
+
+      // Submenu toggle for sidebar
+      const submenuToggle = document.getElementById('managementMobilToggle');
+      const submenu = document.getElementById('managementMobilSubmenu');
+      if (submenuToggle && submenu) {
+        submenuToggle.addEventListener('click', function(event) {
+          event.preventDefault();
+          submenu.classList.toggle('open');
+          submenuToggle.classList.toggle('open');
+        });
+      }
+
       // Logout confirmation for both desktop and mobile
       const logoutLinks = document.querySelectorAll('#logout-link, #logout-link-sidebar');
       logoutLinks.forEach(function(link) {

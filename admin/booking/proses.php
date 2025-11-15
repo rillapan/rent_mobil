@@ -21,19 +21,18 @@ if ($_GET['id'] == 'konfirmasi' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     
     // Update status booking
     error_log("Attempting to update id_booking: $id_booking to status: $status");
-    $update_query = $koneksi->prepare("UPDATE booking SET konfirmasi_pembayaran=? WHERE id_booking=?");
-    $update_query->bindParam(1, $status);
-    $update_query->bindParam(2, $id_booking);
-    $update_query->execute();
+    $update_query = mysqli_prepare($koneksi, "UPDATE booking SET konfirmasi_pembayaran=? WHERE id_booking=?");
+    mysqli_stmt_bind_param($update_query, 'si', $status, $id_booking);
+    mysqli_stmt_execute($update_query);
 
     // Jika status adalah 'Pembayaran Ditolak', update status sewa menjadi 'Dibatalkan'
     if ($status == 'Pembayaran Ditolak') {
-        $update_status_sewa = $koneksi->prepare("UPDATE booking SET status_sewa='Dibatalkan' WHERE id_booking=?");
-        $update_status_sewa->bindParam(1, $id_booking);
-        $update_status_sewa->execute();
+        $update_status_sewa = mysqli_prepare($koneksi, "UPDATE booking SET status_sewa='Dibatalkan' WHERE id_booking=?");
+        mysqli_stmt_bind_param($update_status_sewa, 'i', $id_booking);
+        mysqli_stmt_execute($update_status_sewa);
     }
 
-    $affected_rows = $update_query->rowCount();
+    $affected_rows = mysqli_stmt_affected_rows($update_query);
     if ($affected_rows === 0) { error_log("No rows affected by update for id_booking: $id_booking with status: $status. Check if id_booking exists or status is already the same."); }
 
     // Ambil data user dan mobil
@@ -41,10 +40,11 @@ if ($_GET['id'] == 'konfirmasi' && $_SERVER['REQUEST_METHOD'] == 'POST') {
             FROM booking
             JOIN mobil ON booking.id_mobil = mobil.id_mobil
             WHERE booking.id_booking=?";
-    $stmt = $koneksi->prepare($sql);
-    $stmt->bindParam(1, $id_booking);
-    $stmt->execute();
-    $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = mysqli_prepare($koneksi, $sql);
+    mysqli_stmt_bind_param($stmt, 'i', $id_booking);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $booking = mysqli_fetch_assoc($result);
     $user_id = $booking['id_login'];
     $no_wa = $booking['no_tlp'];
     $customer_name = $booking['nama']; // Get customer name
@@ -84,10 +84,11 @@ if ($_GET['id'] == 'konfirmasi' && $_SERVER['REQUEST_METHOD'] == 'POST') {
             UNIQUE KEY uniq_booking (id_booking)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-        $stmt_penolakan = $koneksi->prepare("INSERT INTO booking_rejections (id_booking, kode_booking, reason, created_at)
+        $stmt_penolakan = mysqli_prepare($koneksi, "INSERT INTO booking_rejections (id_booking, kode_booking, reason, created_at)
             VALUES (?, ?, ?, NOW())
             ON DUPLICATE KEY UPDATE reason = VALUES(reason), created_at = NOW()");
-        $stmt_penolakan->execute([$id_booking, $kode_booking, $pesan_penolakan]);
+        mysqli_stmt_bind_param($stmt_penolakan, 'iss', $id_booking, $kode_booking, $pesan_penolakan);
+        mysqli_stmt_execute($stmt_penolakan);
     }
 
     $link_detail = $url . 'bayar.php?id=' . $kode_booking;
@@ -116,20 +117,10 @@ HTML;
 
     // Simpan notifikasi ke database
     // Untuk Pembayaran Ditolak, simpan juga pesan penolakan dan status khusus
-    if ($status == 'Pembayaran Ditolak') {
-        // Simpan dengan id_booking dan informasi tambahan
-        $insert_query = $koneksi->prepare("INSERT INTO notifikasi (id_login, id_booking, pesan, status_baca) VALUES (?, ?, ?, 0)");
-        $insert_query->bindParam(1, $user_id);
-        $insert_query->bindParam(2, $id_booking);
-        $insert_query->bindParam(3, $pesan);
-        $insert_query->execute();
-    } else {
-        $insert_query = $koneksi->prepare("INSERT INTO notifikasi (id_login, id_booking, pesan, status_baca) VALUES (?, ?, ?, 0)");
-        $insert_query->bindParam(1, $user_id);
-        $insert_query->bindParam(2, $id_booking);
-        $insert_query->bindParam(3, $pesan);
-        $insert_query->execute();
-    }
+    $status_baca = 0;
+    $insert_query = mysqli_prepare($koneksi, "INSERT INTO notifikasi (id_login, id_booking, pesan, status_baca) VALUES (?, ?, ?, ?)");
+    mysqli_stmt_bind_param($insert_query, 'iisi', $user_id, $id_booking, $pesan, $status_baca);
+    mysqli_stmt_execute($insert_query);
 
     // Kirim WhatsApp (gunakan API WhatsApp Gateway, contoh: https://wa.me/?phone=)
     // Ganti dengan API WhatsApp Gateway yang Anda gunakan

@@ -22,6 +22,8 @@
                             <th scope="col">No.</th>
                             <th scope="col">Nama Pengguna</th>
                             <th scope="col">Username</th>
+                            <th scope="col">Foto Profil</th>
+                            <th scope="col">Detail Pelanggan</th>
                             <th scope="col" class="text-center">Aksi</th>
                         </tr>
                     </thead>
@@ -43,6 +45,20 @@
                             <td><?= $no;?></td>
                             <td><?= htmlspecialchars($r['nama_pengguna']);?></td>
                             <td><?= htmlspecialchars($r['username']);?></td>
+                            <td class="text-center">
+                                <img src="../../assets/image/user/<?= htmlspecialchars($r['foto'] ?? 'default.jpg'); ?>" alt="Foto Profil" width="50" height="50" class="img-thumbnail">
+                            </td>
+                            <td>
+                                <div class="customer-details">
+                                    <small>
+                                        <strong>Email:</strong> <?= htmlspecialchars($r['email'] ?? '-');?><br>
+                                        <strong>No. HP:</strong> <?= htmlspecialchars($r['no_hp'] ?? '-');?><br>
+                                        <strong>Provinsi:</strong> <?= htmlspecialchars($r['provinsi'] ?? '-');?><br>
+                                        <strong>Kota/Kab:</strong> <?= htmlspecialchars($r['kota_kabupaten'] ?? '-');?><br>
+                                        <strong>Jenis Kelamin:</strong> <?= htmlspecialchars($r['jenis_kelamin'] ?? '-');?>
+                                    </small>
+                                </div>
+                            </td>
                             <td class="text-center">
                                 <a href="<?php echo $url;?>admin/booking/booking.php?id=<?= $r['id_login'];?>"
                                    class="btn btn-secondary btn-sm" title="Lihat Detail Transaksi">
@@ -81,6 +97,20 @@
     .btn-secondary:hover {
         background-color: #e55e2d; /* sedikit lebih gelap dari secondary */
         border-color: #e55e2d;
+    }
+
+    .customer-details {
+        max-width: 250px;
+        line-height: 1.4;
+    }
+
+    .customer-details small {
+        font-size: 0.85em;
+        color: var(--gray);
+    }
+
+    .customer-details strong {
+        color: var(--dark);
     }
 </style>
 <?php  include '../footer.php';?>

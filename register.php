@@ -260,6 +260,17 @@ require 'koneksi/koneksi.php';
                     </div>
 
                     <div class="form-group">
+                        <label for="email" class="font-weight-bold">
+                            <i class="fas fa-envelope mr-1"></i>Email
+                        </label>
+                        <input type="email" class="form-control" id="email" name="email"
+                               placeholder="Masukkan alamat email Anda" required>
+                        <div class="invalid-feedback">
+                            Email wajib diisi dengan format yang benar.
+                        </div>
+                    </div>
+
+                    <div class="form-group">
                         <label for="pass" class="font-weight-bold">
                             <i class="fas fa-lock mr-1"></i>Password
                         </label>
@@ -369,6 +380,7 @@ require 'koneksi/koneksi.php';
                 const nama = $('#nama').val().trim();
                 const user = $('#user').val().trim();
                 const noHp = $('#no_hp').val().trim();
+                const email = $('#email').val().trim();
                 const pass = $('#pass').val();
                 const confirmPass = $('#confirm_pass').val();
 
@@ -394,6 +406,13 @@ require 'koneksi/koneksi.php';
                 const phoneRegex = /^(\+62|62|0)[8-9][0-9]{7,11}$/;
                 if (!phoneRegex.test(noHp.replace(/\s/g, ''))) {
                     $('#no_hp').addClass('is-invalid');
+                    isValid = false;
+                }
+
+                // Validate email
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    $('#email').addClass('is-invalid');
                     isValid = false;
                 }
 
