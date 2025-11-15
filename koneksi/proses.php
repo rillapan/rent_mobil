@@ -175,10 +175,28 @@ if($_GET['id'] == 'konfirmasi')
 {
 
     $id_booking = $_POST['id_booking'];
+    $payment_method_id = $_POST['payment_method_id'];
     $no_rekening = $_POST['no_rekening'];
     $nama = $_POST['nama'];
     $nominal = $_POST['nominal'];
     $tgl = $_POST['tgl'];
+
+    // Handle file upload
+    $payment_proof = '';
+    if(isset($_FILES['payment_proof']) && $_FILES['payment_proof']['error'] == 0) {
+        $upload_dir = '../assets/image/payment_proofs/';
+        if(!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+
+        $file_extension = pathinfo($_FILES['payment_proof']['name'], PATHINFO_EXTENSION);
+        $file_name = time() . '_' . uniqid() . '.' . $file_extension;
+        $target_file = $upload_dir . $file_name;
+
+        if(move_uploaded_file($_FILES['payment_proof']['tmp_name'], $target_file)) {
+            $payment_proof = 'payment_proofs/' . $file_name;
+        }
+    }
 
     $sql = "INSERT INTO `pembayaran`(`id_booking`, `no_rekening`, `nama_rekening`, `nominal`, `tanggal`)
     VALUES (?,?,?,?,?)";
@@ -188,9 +206,23 @@ if($_GET['id'] == 'konfirmasi')
     mysqli_stmt_close($stmt);
 
     $status = 'Sedang Diproses'; // Changed to 'Sedang Diproses'
-    $sql2 = "UPDATE `booking` SET `konfirmasi_pembayaran`=? WHERE id_booking=?";
+
+    // First check if payment_method_id exists and is valid
+    if (!empty($payment_method_id)) {
+        $check_payment = mysqli_prepare($koneksi, "SELECT id FROM payment_methods WHERE id = ? AND is_active = 1");
+        mysqli_stmt_bind_param($check_payment, "i", $payment_method_id);
+        mysqli_stmt_execute($check_payment);
+        $result_check = mysqli_stmt_get_result($check_payment);
+        if (mysqli_num_rows($result_check) == 0) {
+            // Invalid payment method, set to NULL
+            $payment_method_id = NULL;
+        }
+        mysqli_stmt_close($check_payment);
+    }
+
+    $sql2 = "UPDATE `booking` SET `konfirmasi_pembayaran`=?, `payment_method_id`=?, `payment_proof`=?, `payment_status`='pending' WHERE id_booking=?";
     $stmt2 = mysqli_prepare($koneksi, $sql2);
-    mysqli_stmt_bind_param($stmt2, "si", $status, $id_booking);
+    mysqli_stmt_bind_param($stmt2, "sisi", $status, $payment_method_id, $payment_proof, $id_booking);
     mysqli_stmt_execute($stmt2);
     mysqli_stmt_close($stmt2);
 

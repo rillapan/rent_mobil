@@ -16,8 +16,8 @@
     $stmt_booking = mysqli_prepare($koneksi, "SELECT * FROM booking WHERE kode_booking = ?");
     mysqli_stmt_bind_param($stmt_booking, "s", $kode_booking);
     mysqli_stmt_execute($stmt_booking);
-    $result_stmt_booking = mysqli_stmt_get_result($stmt_booking);
-    $hasil = mysqli_fetch_assoc($result_stmt_booking);
+    $result_stmt = mysqli_stmt_get_result($stmt_booking);
+    $hasil = mysqli_fetch_assoc($result_stmt);
     mysqli_stmt_close($stmt_booking);
 
     if (!$hasil) {
@@ -30,22 +30,33 @@
     $stmt_pembayaran = mysqli_prepare($koneksi, "SELECT * FROM pembayaran WHERE id_booking = ?");
     mysqli_stmt_bind_param($stmt_pembayaran, "i", $id_booking);
     mysqli_stmt_execute($stmt_pembayaran);
-    $result_stmt_pembayaran = mysqli_stmt_get_result($stmt_pembayaran);
+    $result_stmt = mysqli_stmt_get_result($stmt_pembayaran);
     $result_pembayaran = [];
-    while ($row = mysqli_fetch_assoc($result_stmt_pembayaran)) {
+    while ($row = mysqli_fetch_assoc($result_stmt)) {
         $result_pembayaran[] = $row;
     }
     mysqli_stmt_close($stmt_pembayaran);
     $c = count($result_pembayaran);
     $hsl = $c > 0 ? $result_pembayaran[0] : null;
 
+    // Mengambil data payment method jika ada
+    $payment_method = null;
+    if (!empty($hasil['payment_method_id'])) {
+        $stmt_payment_method = mysqli_prepare($koneksi, "SELECT * FROM payment_methods WHERE id = ?");
+        mysqli_stmt_bind_param($stmt_payment_method, "i", $hasil['payment_method_id']);
+        mysqli_stmt_execute($stmt_payment_method);
+        $result_stmt = mysqli_stmt_get_result($stmt_payment_method);
+        $payment_method = mysqli_fetch_assoc($result_stmt);
+        mysqli_stmt_close($stmt_payment_method);
+    }
+
     // Mengambil data mobil
     $id_mobil = $hasil['id_mobil'];
     $stmt_mobil = mysqli_prepare($koneksi, "SELECT * FROM mobil WHERE id_mobil = ?");
     mysqli_stmt_bind_param($stmt_mobil, "i", $id_mobil);
     mysqli_stmt_execute($stmt_mobil);
-    $result_stmt_mobil = mysqli_stmt_get_result($stmt_mobil);
-    $isi = mysqli_fetch_assoc($result_stmt_mobil);
+    $result_stmt = mysqli_stmt_get_result($stmt_mobil);
+    $isi = mysqli_fetch_assoc($result_stmt);
     mysqli_stmt_close($stmt_mobil);
 ?>
 
@@ -140,8 +151,22 @@
                         <div class="table-responsive">
                             <table class="table table-striped table-bordered mb-0">
                                 <tbody>
+                                    <?php if ($payment_method): ?>
                                     <tr>
-                                        <td class="fw-bold">No. Rekening</td>
+                                        <td class="fw-bold">Metode Pembayaran</td>
+                                        <td>
+                                            <span class="badge bg-info">
+                                                <?= strtoupper($payment_method['payment_type']) == 'BANK' ? 'Bank' : 'E-Wallet'; ?> - <?= htmlspecialchars($payment_method['provider_name']); ?>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">No. Rekening Tujuan</td>
+                                        <td><?= htmlspecialchars($payment_method['account_number']); ?> (<?= htmlspecialchars($payment_method['account_name']); ?>)</td>
+                                    </tr>
+                                    <?php endif; ?>
+                                    <tr>
+                                        <td class="fw-bold">No. Rekening Pengirim</td>
                                         <td><?= htmlspecialchars($hsl['no_rekening']); ?></td>
                                     </tr>
                                     <tr>
@@ -156,6 +181,16 @@
                                         <td class="fw-bold">Tgl Transfer</td>
                                         <td><?= htmlspecialchars($hsl['tanggal']); ?></td>
                                     </tr>
+                                    <?php if (!empty($hasil['payment_status'])): ?>
+                                    <tr>
+                                        <td class="fw-bold">Status Pembayaran</td>
+                                        <td>
+                                            <span class="badge bg-<?= $hasil['payment_status'] == 'verified' ? 'success' : ($hasil['payment_status'] == 'rejected' ? 'danger' : 'warning') ?>">
+                                                <?= $hasil['payment_status'] == 'verified' ? 'Terverifikasi' : ($hasil['payment_status'] == 'rejected' ? 'Ditolak' : 'Pending') ?>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -166,6 +201,18 @@
                     <?php endif; ?>
                 </div>
             </div>
+
+            <?php if (!empty($hasil['payment_proof'])): ?>
+            <div class="card shadow-lg mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-image me-2"></i> Bukti Pembayaran</h5>
+                </div>
+                <div class="card-body text-center">
+                    <img src="../../assets/image/<?= htmlspecialchars($hasil['payment_proof']); ?>" alt="Bukti Pembayaran" class="img-fluid rounded" style="max-width: 100%; max-height: 400px;">
+                    <p class="mt-3 text-muted">Bukti pembayaran yang diupload oleh pelanggan</p>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <div class="card shadow-lg">
                 <div class="card-header">

@@ -52,5 +52,40 @@ include '../header.php';
 
 
     </div>
+
+    <div class="row g-4 mt-4">
+        <div class="col-lg-6 col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white d-flex align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i> Informasi Pembayaran</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">Kelola metode pembayaran yang tersedia untuk pelanggan.</p>
+                    <div class="d-grid gap-2">
+                        <a href="payment_methods.php" class="btn btn-info">
+                            <i class="fas fa-cog me-2"></i>Kelola Metode Pembayaran
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 col-md-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white d-flex align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i> Metode Pembayaran</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">Kelola metode pembayaran yang tersedia untuk pelanggan.</p>
+                    <div class="d-grid gap-2">
+                        <a href="payment_methods.php" class="btn btn-success">
+                            <i class="fas fa-cog me-2"></i>Kelola Metode Pembayaran
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
 <?php include '../footer.php'; ?>

@@ -352,6 +352,11 @@
           </a>
         </li>
         <li class="nav-item">
+          <a class="nav-link <?php if($title_web == 'Kelola Merk Mobil'){ echo 'active';}?>" href="<?php echo $url;?>admin/mobil/merk.php">
+            <i class="fas fa-tags"></i> Merk Mobil
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link <?php if($title_web == 'Daftar Supir' || $title_web == 'Tambah Supir' || $title_web == 'Edit Supir'){ echo 'active';}?>" href="<?php echo $url;?>admin/supir/supir.php">
             <i class="fas fa-user-tie"></i> Management Supir
           </a>
@@ -383,6 +388,11 @@
           </a>
         </li>
         <li class="nav-item">
+          <a class="nav-link <?php if($title_web == 'Kelola Metode Pembayaran'){ echo 'active';}?>" href="<?php echo $url;?>admin/pengaturan/payment_methods.php">
+            <i class="fas fa-credit-card"></i> Metode Pembayaran
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="<?php echo $url;?>admin/profil/index.php">
             <i class="fas fa-user"></i> Hallo, <?php echo $hasil_login['nama_pengguna'];?>
           </a>
@@ -410,6 +420,9 @@
             <li class="nav-item <?php if($title_web == 'Daftar Mobil' || $title_web == 'Tambah Mobil' || $title_web == 'Edit Mobil'){ echo 'active';}?>">
               <a class="nav-link" href="<?php echo $url;?>admin/mobil/mobil.php">Management Mobil</a>
             </li>
+            <li class="nav-item <?php if($title_web == 'Kelola Merk Mobil'){ echo 'active';}?>">
+              <a class="nav-link" href="<?php echo $url;?>admin/mobil/merk.php">Merk Mobil</a>
+            </li>
             <li class="nav-item <?php if($title_web == 'Daftar Supir' || $title_web == 'Tambah Supir' || $title_web == 'Edit Supir'){ echo 'active';}?>">
               <a class="nav-link" href="<?php echo $url;?>admin/supir/supir.php">Management Supir</a>
             </li>
@@ -424,6 +437,9 @@
             </li>
             <li class="nav-item <?php if($title_web == 'Pengaturan Website'){ echo 'active';}?>">
               <a class="nav-link" href="<?php echo $url;?>admin/pengaturan/index.php">Info Website</a>
+            </li>
+            <li class="nav-item <?php if($title_web == 'Kelola Metode Pembayaran'){ echo 'active';}?>">
+              <a class="nav-link" href="<?php echo $url;?>admin/pengaturan/payment_methods.php">Metode Pembayaran</a>
             </li>
             <li class="nav-item <?php if($title_web == 'Laporan Transaksi'){ echo 'active';}?>">
               <a class="nav-link" href="<?php echo $url;?>admin/laporan/index.php">Laporan Transaksi</a>

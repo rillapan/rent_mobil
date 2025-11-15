@@ -218,8 +218,20 @@
 
                         <div class="form-group mt-3">
                             <label for="merk" class="form-label">Merk Mobil</label>
-                            <input type="text" class="form-control" id="merk" name="merk" placeholder="Contoh: Toyota Avanza" required>
-                            <div class="form-text">Masukkan merk dan model mobil</div>
+                            <select class="form-select" id="merk" name="merk" required>
+                                <option value="">Pilih Merk Mobil</option>
+                                <?php
+                                $sql_merk = "SELECT * FROM tbl_merk ORDER BY merk ASC";
+                                $row_merk = mysqli_prepare($koneksi, $sql_merk);
+                                mysqli_stmt_execute($row_merk);
+                                $result_merk = mysqli_stmt_get_result($row_merk);
+                                while ($merk = mysqli_fetch_assoc($result_merk)) {
+                                    echo '<option value="' . htmlspecialchars($merk['merk']) . '">' . htmlspecialchars($merk['merk']) . '</option>';
+                                }
+                                mysqli_stmt_close($row_merk);
+                                ?>
+                            </select>
+                            <div class="form-text">Pilih merk mobil dari daftar yang tersedia</div>
                         </div>
 
                         <div class="form-group mt-3">
