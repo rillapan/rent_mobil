@@ -13,7 +13,9 @@
     $kode_booking = htmlspecialchars($_GET['id']);
 
     // Mengambil data booking menggunakan prepared statement untuk keamanan
-    $stmt_booking = mysqli_prepare($koneksi, "SELECT * FROM booking WHERE kode_booking = ?");
+    $stmt_booking = mysqli_prepare($koneksi, "SELECT booking.*, mobil_plat.no_plat FROM booking 
+                                            LEFT JOIN mobil_plat ON booking.id_plat = mobil_plat.id_plat
+                                            WHERE booking.kode_booking = ?");
     mysqli_stmt_bind_param($stmt_booking, "s", $kode_booking);
     mysqli_stmt_execute($stmt_booking);
     $result_stmt = mysqli_stmt_get_result($stmt_booking);
@@ -224,7 +226,7 @@
                     </li>
                     <li class="list-group-item">
                         <p class="mb-1"><strong>Merk:</strong> <?= htmlspecialchars($isi['merk']); ?></p>
-                        <p class="mb-1"><strong>No. Plat:</strong> <?= htmlspecialchars($isi['no_plat']); ?></p>
+                        <p class="mb-1"><strong>No. Plat:</strong> <?= htmlspecialchars($hasil['no_plat']); ?></p>
                         <p class="mb-0"><strong>Harga:</strong> Rp<?= number_format(htmlspecialchars($isi['harga']), 0, ',', '.'); ?>/hari</p>
                     </li>
                     <?php if ($isi['status'] == 'Tersedia') : ?>
@@ -290,6 +292,10 @@
                                     <tr>
                                         <td class="fw-bold">Total Harga</td>
                                         <td>Rp<?= number_format(htmlspecialchars($hasil['total_harga']), 0, ',', '.'); ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">No. Plat</td>
+                                        <td><?= htmlspecialchars($hasil['no_plat']); ?></td>
                                     </tr>
                                     <tr>
                                         <td class="fw-bold">Status Konfirmasi</td>

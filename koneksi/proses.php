@@ -127,49 +127,100 @@ if($_GET['id'] == 'daftar')
 
 if($_GET['id'] == 'booking')
 {
-    $harga_mobil = $_POST['harga_mobil'];
-    $harga_supir = $_POST['harga_supir'];
-    $lama_sewa = $_POST['lama_sewa'];
-    $total = ($harga_mobil + $harga_supir) * $lama_sewa;
-    $unik  = random_int(100,999);
-    $total_harga = $total + $unik;
+    mysqli_autocommit($koneksi, false); // Start transaction
+    $commit = true;
 
-    $kode_booking = time();
-    $id_login = $_POST['id_login'];
     $id_mobil = $_POST['id_mobil'];
-    $ktp = $_POST['ktp'];
-    $nama = $_POST['nama'];
-    $alamat = $_POST['alamat'];
-    $no_tlp = $_POST['no_tlp'];
-    $tanggal = $_POST['tanggal'];
-    $konfirmasi_pembayaran = "Belum Bayar";
-    $tgl_input = date('Y-m-d');
-    $id_supir = $_POST['id_supir'] ?: null; // ID supir, null jika tidak dipilih
+    $id_plat_mobil = null;
 
-    $sql = "INSERT INTO booking (kode_booking,
-    id_login,
-    id_mobil,
-    ktp,
-    nama,
-    alamat,
-    no_tlp,
-    tanggal, lama_sewa, total_harga, konfirmasi_pembayaran, tgl_input, id_supir)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    $stmt = mysqli_prepare($koneksi, $sql);
-    mysqli_stmt_bind_param($stmt, "iiissssssisss", $kode_booking, $id_login, $id_mobil, $ktp, $nama, $alamat, $no_tlp, $tanggal, $lama_sewa, $total_harga, $konfirmasi_pembayaran, $tgl_input, $id_supir);
-    mysqli_stmt_execute($stmt);
-    mysqli_stmt_close($stmt);
-
-    // Update status supir jika dipilih
-    if (!empty($_POST['id_supir'])) {
-        $sql_update_supir = "UPDATE supir SET status = 'Sedang Digunakan' WHERE id_supir = ?";
-        $stmt_update_supir = mysqli_prepare($koneksi, $sql_update_supir);
-        mysqli_stmt_bind_param($stmt_update_supir, "i", $_POST['id_supir']);
-        mysqli_stmt_execute($stmt_update_supir);
-        mysqli_stmt_close($stmt_update_supir);
+    if (isset($_POST['id_plat_mobil'])) {
+        if ($_POST['id_plat_mobil'] == 'otomatis') {
+            // Ambil plat tersedia pertama secara acak dan kunci barisnya
+            $sql_plat = "SELECT id_plat FROM mobil_plat WHERE id_mobil = ? AND status_plat = 'Tersedia' ORDER BY RAND() LIMIT 1 FOR UPDATE";
+            $stmt_plat = mysqli_prepare($koneksi, $sql_plat);
+            mysqli_stmt_bind_param($stmt_plat, "i", $id_mobil);
+            mysqli_stmt_execute($stmt_plat);
+            $result_plat = mysqli_stmt_get_result($stmt_plat);
+            if ($row = mysqli_fetch_assoc($result_plat)) {
+                $id_plat_mobil = $row['id_plat'];
+            }
+            mysqli_stmt_close($stmt_plat);
+        } else {
+            // Kunci baris plat yang dipilih
+            $sql_plat = "SELECT id_plat FROM mobil_plat WHERE id_plat = ? AND status_plat = 'Tersedia' FOR UPDATE";
+            $stmt_plat = mysqli_prepare($koneksi, $sql_plat);
+            mysqli_stmt_bind_param($stmt_plat, "i", $_POST['id_plat_mobil']);
+            mysqli_stmt_execute($stmt_plat);
+            $result_plat = mysqli_stmt_get_result($stmt_plat);
+            if ($row = mysqli_fetch_assoc($result_plat)) {
+                $id_plat_mobil = $row['id_plat'];
+            }
+            mysqli_stmt_close($stmt_plat);
+        }
     }
 
-    header('Location: ../bayar.php?id='.$kode_booking.'&status=bookingsuccess');
+    if (is_null($id_plat_mobil)) {
+        $commit = false;
+        header('Location: ../booking.php?id='.$id_mobil.'&status=plat_tidak_tersedia');
+    } else {
+        // Update status plat menjadi 'Dipesan'
+        $sql_update_plat = "UPDATE mobil_plat SET status_plat = 'Dipesan' WHERE id_plat = ?";
+        $stmt_update_plat = mysqli_prepare($koneksi, $sql_update_plat);
+        mysqli_stmt_bind_param($stmt_update_plat, "i", $id_plat_mobil);
+        if (!mysqli_stmt_execute($stmt_update_plat)) {
+            $commit = false;
+        }
+        mysqli_stmt_close($stmt_update_plat);
+
+        if ($commit) {
+            $harga_mobil = $_POST['harga_mobil'];
+            $harga_supir = $_POST['harga_supir'];
+            $lama_sewa = $_POST['lama_sewa'];
+            $total = ($harga_mobil + $harga_supir) * $lama_sewa;
+            $unik  = random_int(100,999);
+            $total_harga = $total + $unik;
+
+            $kode_booking = time();
+            $id_login = $_POST['id_login'];
+            $ktp = $_POST['ktp'];
+            $nama = $_POST['nama'];
+            $alamat = $_POST['alamat'];
+            $no_tlp = $_POST['no_tlp'];
+            $tanggal = $_POST['tanggal'];
+            $konfirmasi_pembayaran = "Belum Bayar";
+            $tgl_input = date('Y-m-d');
+            $id_supir = $_POST['id_supir'] ?: null;
+
+            $sql = "INSERT INTO booking (kode_booking, id_login, id_mobil, id_plat, ktp, nama, alamat, no_tlp, tanggal, lama_sewa, total_harga, konfirmasi_pembayaran, tgl_input, id_supir)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            $stmt = mysqli_prepare($koneksi, $sql);
+            mysqli_stmt_bind_param($stmt, "iiiissssssisss", $kode_booking, $id_login, $id_mobil, $id_plat_mobil, $ktp, $nama, $alamat, $no_tlp, $tanggal, $lama_sewa, $total_harga, $konfirmasi_pembayaran, $tgl_input, $id_supir);
+            
+            if (!mysqli_stmt_execute($stmt)) {
+                $commit = false;
+            }
+            mysqli_stmt_close($stmt);
+
+            if ($commit && !empty($_POST['id_supir'])) {
+                $sql_update_supir = "UPDATE supir SET status = 'Sedang Digunakan' WHERE id_supir = ?";
+                $stmt_update_supir = mysqli_prepare($koneksi, $sql_update_supir);
+                mysqli_stmt_bind_param($stmt_update_supir, "i", $_POST['id_supir']);
+                if (!mysqli_stmt_execute($stmt_update_supir)) {
+                    $commit = false;
+                }
+                mysqli_stmt_close($stmt_update_supir);
+            }
+        }
+
+        if ($commit) {
+            mysqli_commit($koneksi);
+            header('Location: ../bayar.php?id='.$kode_booking.'&status=bookingsuccess');
+        } else {
+            mysqli_rollback($koneksi);
+            header('Location: ../booking.php?id='.$id_mobil.'&status=bookinggagal');
+        }
+    }
+    mysqli_autocommit($koneksi, true); // End transaction
 }
 
 if($_GET['id'] == 'konfirmasi')
@@ -371,32 +422,46 @@ if($_GET['id'] == 'ajukan_refund')
     }
 
     // Ambil informasi penolakan pembayaran (jika ada)
+    $alasan_penolakan = '-';
     $stmt_penolakan = mysqli_prepare($koneksi, "SELECT reason FROM booking_rejections WHERE id_booking = ?");
     mysqli_stmt_bind_param($stmt_penolakan, "i", $booking['id_booking']);
     mysqli_stmt_execute($stmt_penolakan);
     $result_stmt = mysqli_stmt_get_result($stmt_penolakan);
     $data_penolakan = mysqli_fetch_assoc($result_stmt);
+    if ($data_penolakan) {
+        $alasan_penolakan = $data_penolakan['reason'];
+    }
     mysqli_stmt_close($stmt_penolakan);
-    $alasan_penolakan = $data_penolakan['reason'] ?? '-';
 
     // Ambil informasi pengguna
-    $stmt_user = mysqli_prepare($koneksi, "SELECT nama_pengguna, no_hp FROM login WHERE id_login = ?");
-    mysqli_stmt_bind_param($stmt_user, "i", $booking['id_login']);
+    $nama_pengguna = $booking['nama'] ?? '';
+    $no_hp_user = $booking['no_tlp'] ?? '';
+    $email_user = '';
+    $stmt_user = mysqli_prepare($koneksi, "SELECT nama_pengguna, no_hp, email FROM login WHERE id_login = ?");
+    mysqli_stmt_bind_param($stmt_user, "i", $id_login);
     mysqli_stmt_execute($stmt_user);
     $result_stmt = mysqli_stmt_get_result($stmt_user);
     $user_data = mysqli_fetch_assoc($result_stmt);
+    if ($user_data) {
+        $nama_pengguna = $user_data['nama_pengguna'] ?: $nama_pengguna;
+        $no_hp_user = $user_data['no_hp'] ?: $no_hp_user;
+        $email_user = $user_data['email'] ?? '';
+    }
     mysqli_stmt_close($stmt_user);
-    $nama_pengguna = $user_data['nama_pengguna'] ?? $booking['nama'];
-    $no_hp_user = $user_data['no_hp'] ?? $booking['no_tlp'];
 
-    // Simpan atau perbarui data refund request
-    $koneksi->exec("CREATE TABLE IF NOT EXISTS refund_requests (
+    if (empty($nama_pengguna)) {
+        $nama_pengguna = 'Pelanggan';
+    }
+
+    // Create table refund_requests jika belum ada
+    $create_table_query = "CREATE TABLE IF NOT EXISTS refund_requests (
         id INT AUTO_INCREMENT PRIMARY KEY,
         id_booking INT NOT NULL,
         kode_booking VARCHAR(255) NOT NULL,
         id_login INT NOT NULL,
         nama_pelanggan VARCHAR(255) NOT NULL,
         no_hp VARCHAR(50),
+        email_pelanggan VARCHAR(255),
         metode_pembayaran VARCHAR(100),
         alasan_penolakan TEXT,
         alasan_refund TEXT,
@@ -412,23 +477,44 @@ if($_GET['id'] == 'ajukan_refund')
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         UNIQUE KEY uniq_refund_booking (id_booking)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    mysqli_query($koneksi, $create_table_query);
 
-    $total_pembayaran_decimal = number_format($booking['total_harga'], 2, '.', '');
-    $tanggal_pesanan = null;
-    if (!empty($booking['tanggal'])) {
-        $timestamp_tanggal = strtotime($booking['tanggal']);
-        if ($timestamp_tanggal) {
-            $tanggal_pesanan = date('Y-m-d', $timestamp_tanggal);
-        }
+    // Pastikan kolom yang dipakai ada di database (jika tabel sudah ada versi lama)
+    $col_check = mysqli_query($koneksi, "SHOW COLUMNS FROM refund_requests LIKE 'email_pelanggan'");
+    if ($col_check && mysqli_num_rows($col_check) == 0) {
+        // tambahkan kolom jika belum ada
+        mysqli_query($koneksi, "ALTER TABLE refund_requests ADD COLUMN email_pelanggan VARCHAR(255) NULL AFTER no_hp");
     }
 
+    // Siapkan semua variable sebagai variabel (penting untuk bind_param)
+    $param_id_booking = (int)$booking['id_booking'];
+    $param_kode_booking = $kode_booking;
+    $param_id_login = (int)$booking['id_login'];
+    $param_nama_pelanggan = $nama_pengguna;
+    $param_no_hp = $no_hp_user;
+    $param_email = $email_user;
+    $param_metode = 'Transfer Bank';
+    $param_alasan_penolakan = $alasan_penolakan;
+    $param_alasan_refund = $alasan_refund;
+    $param_no_rek = $no_rekening_refund;
+    $param_nama_rek = $nama_rekening_refund;
+    $param_status = 'Menunggu Refund';
+    $param_total = (float)$booking['total_harga'];
+    $param_tanggal = null;
+    if (!empty($booking['tanggal'])) {
+        $parsed = date('Y-m-d', strtotime($booking['tanggal']));
+        $param_tanggal = $parsed ?: null;
+    }
+
+    // Prepare statement insert/update refund_requests
     $stmt_refund = mysqli_prepare($koneksi, "INSERT INTO refund_requests
-        (id_booking, kode_booking, id_login, nama_pelanggan, no_hp, metode_pembayaran, alasan_penolakan, alasan_refund, no_rekening_refund, nama_rekening_refund, status, total_pembayaran, tanggal_pesanan)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Menunggu Refund', ?, ?)
+        (id_booking, kode_booking, id_login, nama_pelanggan, no_hp, email_pelanggan, metode_pembayaran, alasan_penolakan, alasan_refund, no_rekening_refund, nama_rekening_refund, status, total_pembayaran, tanggal_pesanan)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             nama_pelanggan = VALUES(nama_pelanggan),
             no_hp = VALUES(no_hp),
+            email_pelanggan = VALUES(email_pelanggan),
             metode_pembayaran = VALUES(metode_pembayaran),
             alasan_penolakan = VALUES(alasan_penolakan),
             alasan_refund = VALUES(alasan_refund),
@@ -436,89 +522,44 @@ if($_GET['id'] == 'ajukan_refund')
             nama_rekening_refund = VALUES(nama_rekening_refund),
             status = 'Menunggu Refund',
             total_pembayaran = VALUES(total_pembayaran),
-            tanggal_pesanan = VALUES(tanggal_pesanan),
-            catatan_admin = NULL,
-            nominal_refund = NULL,
-            processed_at = NULL,
-            admin_id = NULL");
-    mysqli_stmt_bind_param($stmt_refund, "isisssssssss", $booking['id_booking'], $kode_booking, $booking['id_login'], $nama_pengguna, $no_hp_user, 'Transfer Bank', $alasan_penolakan, $alasan_refund, $no_rekening_refund, $nama_rekening_refund, $total_pembayaran_decimal, $tanggal_pesanan);
-    mysqli_stmt_execute($stmt_refund);
+            tanggal_pesanan = VALUES(tanggal_pesanan)");
+
+    if (!$stmt_refund) {
+        error_log("Prepare refund failed: " . mysqli_error($koneksi));
+        header('Location: ../notifikasi.php?status=refundfailed');
+        exit();
+    }
+
+    // Type string must match 14 params: i (id_booking), s (kode), i (id_login), then 9 strings, then d, then s
+    $types = "isisssssssssds"; // i s i + 9*s + d + s
+    mysqli_stmt_bind_param($stmt_refund, $types,
+        $param_id_booking,
+        $param_kode_booking,
+        $param_id_login,
+        $param_nama_pelanggan,
+        $param_no_hp,
+        $param_email,
+        $param_metode,
+        $param_alasan_penolakan,
+        $param_alasan_refund,
+        $param_no_rek,
+        $param_nama_rek,
+        $param_status,
+        $param_total,
+        $param_tanggal
+    );
+
+    if (!mysqli_stmt_execute($stmt_refund)) {
+        error_log("Refund insert error: " . mysqli_stmt_error($stmt_refund));
+        mysqli_stmt_close($stmt_refund);
+        header('Location: ../notifikasi.php?status=refundfailed');
+        exit();
+    }
     mysqli_stmt_close($stmt_refund);
 
-    // Siapkan data untuk notifikasi admin
-    $total_harga_formatted = number_format($booking['total_harga'], 0, ',', '.');
-    $pesan_refund = <<<HTML
-<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-    <h4 style="color: #e74c3c; margin-bottom: 10px;">
-        <i class="fas fa-undo" style="color: #e74c3c;"></i> &nbsp; <strong>Permintaan Refund</strong>
-    </h4>
-    <p style="margin-bottom: 20px;">Pelanggan mengajukan refund untuk booking berikut:</p>
-    
-    <div style="background-color: #f8f9fa; border-left: 4px solid #e74c3c; padding: 15px; margin-bottom: 20px;">
-        <h5 style="color: #2c3e50; margin-top: 0; margin-bottom: 10px;">
-            <i class="fas fa-receipt" style="color: #FF6B35;"></i> <strong style="color: #333;">Detail Booking</strong>
-        </h5>
-        <p style="margin: 5px 0;"><strong>Kode Booking :</strong> {$kode_booking}</p>
-        <p style="margin: 5px 0;"><strong>Nama :</strong> {$booking['nama']}</p>
-        <p style="margin: 5px 0;"><strong>Total Harga :</strong> Rp {$total_harga_formatted}</p>
-        <p style="margin: 5px 0;"><strong>Alasan Penolakan :</strong> {$alasan_penolakan}</p>
-        <p style="margin: 5px 0;"><strong>Metode Pembayaran :</strong> Transfer Bank</p>
-    </div>
-    
-    <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px;">
-        <h5 style="color: #2c3e50; margin-top: 0; margin-bottom: 10px;">
-            <i class="fas fa-info-circle" style="color: #ffc107;"></i> <strong style="color: #333;">Detail Refund</strong>
-        </h5>
-        <p style="margin: 5px 0;"><strong>Alasan Refund :</strong> {$alasan_refund}</p>
-        <p style="margin: 5px 0;"><strong>No. Rekening :</strong> {$no_rekening_refund}</p>
-        <p style="margin: 5px 0;"><strong>Nama Pemilik Rekening :</strong> {$nama_rekening_refund}</p>
-    </div>
-    
-    <p style="color: #666; font-size: 0.9em;">Silakan proses refund ini segera.</p>
-</div>
-HTML;
-
-    // Simpan notifikasi untuk admin (level admin)
-    // Ambil semua admin
-    $stmt_admin = mysqli_prepare($koneksi, "SELECT id_login FROM login WHERE level = 'admin'");
-    mysqli_stmt_execute($stmt_admin);
-    $result_stmt = mysqli_stmt_get_result($stmt_admin);
-    $admins = [];
-    while ($row = mysqli_fetch_assoc($result_stmt)) {
-        $admins[] = $row;
-    }
-    mysqli_stmt_close($stmt_admin);
-
-    foreach($admins as $admin) {
-        $stmt_notif = mysqli_prepare($koneksi, "INSERT INTO notifikasi (id_login, id_booking, pesan, status_baca) VALUES (?, ?, ?, 0)");
-        mysqli_stmt_bind_param($stmt_notif, "iisi", $admin['id_login'], $booking['id_booking'], $pesan_refund, 0);
-        mysqli_stmt_execute($stmt_notif);
-        mysqli_stmt_close($stmt_notif);
-    }
-
-    // Kirim notifikasi konfirmasi ke user
-    $pesan_konfirmasi = <<<HTML
-<div style="font-family: Arial, sans-serif; line-height: 1.6;">
-    <h4 style="color: #3498db; margin-bottom: 10px;">
-        <i class="fas fa-check-circle" style="color: #3498db;"></i> &nbsp; <strong>Permintaan Refund Diterima</strong>
-    </h4>
-    <p style="margin-bottom: 20px;">Terima kasih! Permintaan refund Anda untuk booking <strong>{$kode_booking}</strong> telah kami terima.</p>
-    <p style="margin-bottom: 20px;">Tim admin akan memproses refund Anda dalam 1-3 hari kerja. Kami akan menghubungi Anda melalui notifikasi atau kontak yang terdaftar.</p>
-    <p style="color: #666; font-size: 0.9em;">Jika ada pertanyaan, silakan hubungi customer support kami.</p>
-</div>
-HTML;
-
-    $stmt_notif_user = mysqli_prepare($koneksi, "INSERT INTO notifikasi (id_login, id_booking, pesan, status_baca) VALUES (?, ?, ?, 0)");
-    mysqli_stmt_bind_param($stmt_notif_user, "iisi", $id_login, $booking['id_booking'], $pesan_konfirmasi, 0);
-    mysqli_stmt_execute($stmt_notif_user);
-    mysqli_stmt_close($stmt_notif_user);
-
-    // Update status booking menjadi "Menunggu Refund" atau status khusus
-    $status_refund = 'Menunggu Refund';
-    $stmt_update = mysqli_prepare($koneksi, "UPDATE booking SET konfirmasi_pembayaran = ? WHERE id_booking = ?");
-    mysqli_stmt_bind_param($stmt_update, "si", $status_refund, $booking['id_booking']);
-    mysqli_stmt_execute($stmt_update);
-    mysqli_stmt_close($stmt_update);
+    // Status refund sudah di-track di tabel refund_requests dengan kolom 'status'
+    // Tidak perlu update booking_rejections karena tabel tersebut hanya menyimpan alasan penolakan
 
     header('Location: ../notifikasi.php?status=refundsuccess');
-}
+    exit();
+} // <-- tutup if($_GET['id'] == 'ajukan_refund')

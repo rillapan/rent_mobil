@@ -7,16 +7,35 @@
     $error_message = null;
 
     if (isset($_POST['kode_booking'])) {
-        $kode_booking = htmlspecialchars($_POST['kode_booking']);
+        $kode_booking = trim($_POST['kode_booking']);
 
-        $sql = "SELECT mobil.merk, mobil.no_plat, mobil.gambar, booking.* FROM booking JOIN mobil ON 
-                booking.id_mobil=mobil.id_mobil WHERE booking.kode_booking = ?";
-        $row = $koneksi->prepare($sql);
-        $row->execute(array($kode_booking));
-        $booking_data = $row->fetch();
+        $sql = "
+            SELECT 
+                b.*, 
+                m.*, 
+                mp.no_plat
+            FROM booking b
+            JOIN mobil m ON b.id_mobil = m.id_mobil
+            LEFT JOIN mobil_plat mp ON b.id_plat = mp.id_plat
+            WHERE b.kode_booking = ?
+        ";
+
+        $stmt = mysqli_prepare($koneksi, $sql);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "s", $kode_booking);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            if ($result) {
+                $booking_data = mysqli_fetch_assoc($result);
+            }
+            mysqli_stmt_close($stmt);
+        } else {
+            $error_message = "Terjadi kesalahan query. Silakan coba lagi.";
+            error_log("Prepare gagal cek_pesanan: " . mysqli_error($koneksi));
+        }
 
         if (!$booking_data) {
-            $error_message = "Pesanan dengan Kode Booking '" . $kode_booking . "' tidak ditemukan.";
+            $error_message = "Pesanan dengan Kode Booking '" . htmlspecialchars($kode_booking) . "' tidak ditemukan.";
         }
     }
 ?>
@@ -94,37 +113,42 @@
                             <tr>
                                 <td>Kode Booking</td>
                                 <td>:</td>
-                                <td><?= htmlspecialchars($booking_data['kode_booking']); ?></td>
+                                <td><?= htmlspecialchars($booking_data['kode_booking'] ?? '') ; ?></td>
                             </tr>
                             <tr>
                                 <td>Nama Pelanggan</td>
                                 <td>:</td>
-                                <td><?= htmlspecialchars($booking_data['nama']); ?></td>
+                                <td><?= htmlspecialchars($booking_data['nama'] ?? '') ; ?></td>
                             </tr>
                             <tr>
                                 <td>No. Telepon</td>
                                 <td>:</td>
-                                <td><?= htmlspecialchars($booking_data['no_tlp']); ?></td>
+                                <td><?= htmlspecialchars($booking_data['no_tlp'] ?? '') ; ?></td>
                             </tr>
                             <tr>
                                 <td>No. KTP</td>
                                 <td>:</td>
-                                <td><?= htmlspecialchars($booking_data['ktp']); ?></td>
+                                <td><?= htmlspecialchars($booking_data['ktp'] ?? '') ; ?></td>
                             </tr>
                             <tr>
                                 <td>Tanggal Sewa</td>
                                 <td>:</td>
-                                <td><?= date('d/m/Y', strtotime(htmlspecialchars($booking_data['tanggal']))); ?></td>
+                                <td>
+                                    <?php
+                                        $tgl = $booking_data['tanggal'] ?? '';
+                                        echo $tgl ? date('d/m/Y', strtotime($tgl)) : '-';
+                                    ?>
+                                </td>
                             </tr>
                             <tr>
                                 <td>Lama Sewa</td>
                                 <td>:</td>
-                                <td><?= htmlspecialchars($booking_data['lama_sewa']); ?> hari</td>
+                                <td><?= htmlspecialchars($booking_data['lama_sewa'] ?? '') ; ?> hari</td>
                             </tr>
                             <tr>
                                 <td>Total Harga</td>
                                 <td>:</td>
-                                <td>Rp. <?= number_format(htmlspecialchars($booking_data['total_harga'])); ?></td>
+                                <td>Rp. <?= number_format((float)($booking_data['total_harga'] ?? 0)); ?></td>
                             </tr>
                         </table>
                     </div>
@@ -134,20 +158,22 @@
                                 <h6 class="mb-0"><i class="fas fa-car me-2"></i> Detail Mobil</h6>
                             </div>
                             <div class="card-body text-center">
-                                <img src="assets/image/<?= htmlspecialchars($booking_data['gambar']); ?>" class="img-fluid rounded mb-3" style="max-height: 150px; object-fit: cover;" alt="Gambar Mobil">
-                                <h5><?= htmlspecialchars($booking_data['merk']); ?></h5>
-                                <p class="text-muted">No. Plat: <?= htmlspecialchars($booking_data['no_plat']); ?></p>
+                                <img src="assets/image/<?= htmlspecialchars($booking_data['gambar'] ?? 'default.png'); ?>" class="img-fluid rounded mb-3" style="max-height: 150px; object-fit: cover;" alt="Gambar Mobil">
+                                <h5><?= htmlspecialchars($booking_data['merk'] ?? '') ; ?></h5>
+                                <p class="text-muted">No. Plat: <?= htmlspecialchars($booking_data['no_plat'] ?? '-'); ?></p>
                             </div>
                             <ul class="list-group list-group-flush">
                                 <li class="list-group-item">
                                     <strong>Status Pembayaran:</strong>
-                                    <?php if($booking_data['konfirmasi_pembayaran'] == 'Pembayaran Diterima'){ ?>
-                                        <span class="badge bg-success float-end"><i class="fas fa-check-circle me-1"></i> Pembayaran Diterima</span>
-                                    <?php } elseif($booking_data['konfirmasi_pembayaran'] == 'Sedang Diproses'){ ?>
-                                        <span class="badge bg-warning float-end"><i class="fas fa-hourglass-half me-1"></i> Diproses</span>
-                                    <?php }else { ?>
-                                        <span class="badge bg-danger float-end"><i class="fas fa-times-circle me-1"></i> Belum Dibayar</span>
-                                    <?php } ?>
+                                    <?php
+                                        $status = $booking_data['konfirmasi_pembayaran'] ?? '';
+                                        if ($status == 'Pembayaran Diterima') { ?>
+                                            <span class="badge bg-success float-end"><i class="fas fa-check-circle me-1"></i> Pembayaran Diterima</span>
+                                        <?php } elseif ($status == 'Sedang Diproses') { ?>
+                                            <span class="badge bg-warning float-end"><i class="fas fa-hourglass-half me-1"></i> Diproses</span>
+                                        <?php } else { ?>
+                                            <span class="badge bg-danger float-end"><i class="fas fa-times-circle me-1"></i> Belum Dibayar</span>
+                                        <?php } ?>
                                 </li>
                             </ul>
                         </div>
@@ -173,7 +199,7 @@
       </div>
       <div class="modal-body text-center py-4">
         <i class="fas fa-frown fa-4x text-warning mb-3"></i>
-        <p class="lead"><?= $error_message; ?></p>
+        <p class="lead"><?= htmlspecialchars($error_message ?? ''); ?></p>
         <p class="text-muted">Pastikan Kode Booking yang Anda masukkan sudah benar.</p>
       </div>
       <div class="modal-footer custom-modal-footer justify-content-center">

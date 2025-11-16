@@ -103,10 +103,14 @@
     <div class="col-sm-6 mb-4">
         <div class="card shadow-lg h-100">
             <div class="card-body">
-                <h4 class="card-title text-primary mb-3"><?php echo htmlspecialchars($hasil['merk']);?></h4>
+                <h4 class="card-title text-primary mb-3"><?php echo htmlspecialchars($hasil['nama_mobil'] ?? $hasil['merk']);?></h4>
                 <p class="card-text text-muted">
                     <strong>Deskripsi:</strong><br>
                     <?php echo htmlspecialchars($hasil['deskripsi']);?>
+                </p>
+                <p class="card-text">
+                    <strong>Tahun Terbit:</strong> <?php echo htmlspecialchars($hasil['tahun_terbit'] ?? 'Tidak tersedia');?><br>
+                    <strong>Jumlah Kursi:</strong> <?php echo htmlspecialchars($hasil['jumlah_kursi'] ?? 'Tidak tersedia');?>
                 </p>
                 <?php if(!empty($hasil['keunggulan'])){ ?>
                 <hr>
@@ -149,7 +153,15 @@
                         <i class="fas fa-times-circle"></i> Tidak Tersedia
                     </li>
                     <?php }?>
-                    
+
+                    <li class="list-group-item info-item">
+                        <i class="fas fa-calendar-alt"></i> Tahun Terbit: <?php echo htmlspecialchars($hasil['tahun_terbit'] ?? '-');?>
+                    </li>
+
+                    <li class="list-group-item info-item">
+                        <i class="fas fa-users"></i> Jumlah Kursi: <?php echo htmlspecialchars($hasil['jumlah_kursi'] ?? '-');?>
+                    </li>
+
                     <li class="list-group-item price-item">
                         <i class="fas fa-money-bill-wave"></i> Rp. <?php echo number_format(htmlspecialchars($hasil['harga']));?>/ hari
                     </li>

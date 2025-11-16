@@ -54,14 +54,15 @@
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         color: #333;
         background-color: #f8f9fa;
-        padding-top: 80px; /* Memberi ruang untuk header fixed */
+        padding-top: 100px; /* Adjusted for 100x100px logo without changing header size */
       }
 
       /* Modern Header Styling */
       .modern-header {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white;
-        padding: 1rem 0;
+        padding: 0; /* Adjusted to keep header size */
+        min-height: 100px; /* Ensure header height accommodates 100x100px logo */
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         position: fixed;
         top: 0;
@@ -207,6 +208,13 @@
         letter-spacing: 0.5px;
         text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
       }
+
+      .sidebar-logo {
+        width: 40px;
+        height: 40px;
+        margin-right: 10px;
+        object-fit: contain;
+      }
       .sidebar-nav {
         padding: 1rem 0; /* Add some vertical padding */
         list-style: none; /* Remove default list bullets */
@@ -264,6 +272,10 @@
 
       .submenu-toggle.open .submenu-icon {
         transform: rotate(180deg);
+      }
+
+      .sidebar.submenu-open {
+        overflow-y: hidden;
       }
       .sidebar-overlay {
         display: none;
@@ -350,6 +362,9 @@
         <h4 class="d-none d-md-block text-light mb-0"><b>Admin Panel</b></h4>
       </div>
       <div class="col-8 col-md-8 d-flex justify-content-end align-items-center">
+        <?php if(!empty($info_web->logo)){ ?>
+          <img src="../../assets/image/<?= htmlspecialchars($info_web->logo); ?>" alt="Logo" style="width: 100px; height: 100px; margin-right: 10px; object-fit: contain;">
+        <?php } ?>
         <h2 class="brand-name mb-0"><b><?= $info_web->nama_rental; ?></b> <span>RENTAL</span></h2>
       </div>
     </div>
@@ -359,6 +374,9 @@
     <!-- Sidebar for mobile -->
     <div class="sidebar open" id="sidebar">
       <div class="sidebar-header d-flex align-items-center justify-content-between p-3">
+        <?php if(!empty($info_web->logo)){ ?>
+          <img src="../../assets/image/<?= htmlspecialchars($info_web->logo); ?>" alt="Logo" class="sidebar-logo">
+        <?php } ?>
         <h5 class="brand-name mb-0 sidebar-brand-name"><b><?= $info_web->nama_rental; ?></b> <span>RENTAL</span></h5>
         <button class="close-sidebar" id="closeSidebar" aria-label="Close Sidebar">
           <i class="fas fa-times"></i>
@@ -527,11 +545,13 @@
       // Submenu toggle for sidebar
       const submenuToggle = document.getElementById('managementMobilToggle');
       const submenu = document.getElementById('managementMobilSubmenu');
+      const sidebar = document.getElementById('sidebar');
       if (submenuToggle && submenu) {
         submenuToggle.addEventListener('click', function(event) {
           event.preventDefault();
           submenu.classList.toggle('open');
           submenuToggle.classList.toggle('open');
+          sidebar.classList.toggle('submenu-open');
         });
       }
 

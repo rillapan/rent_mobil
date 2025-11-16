@@ -16,12 +16,37 @@ if ($aksi == 'update_web') {
     $alamat = $_POST['alamat'];
     $no_rek = $_POST['no_rek'];
 
-    $sql = "UPDATE infoweb SET nama_rental = ?, email = ?, telp = ?, alamat = ?, no_rek = ? WHERE id = 1";
-    $stmt = $koneksi->prepare($sql);
-    if ($stmt->execute([$nama_rental, $email, $telp, $alamat, $no_rek])) {
-        header('Location: pengaturan/index.php?status=web_success');
+    $logo = '';
+    if (!empty($_FILES['logo']['name'])) {
+        $target_dir = "../assets/image/";
+        $target_file = $target_dir . basename($_FILES["logo"]["name"]);
+        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+
+        // Check if image file is a actual image or fake image
+        $check = getimagesize($_FILES["logo"]["tmp_name"]);
+        if ($check !== false) {
+            if (move_uploaded_file($_FILES["logo"]["tmp_name"], $target_file)) {
+                $logo = basename($_FILES["logo"]["name"]);
+            }
+        }
+    }
+
+    if (!empty($logo)) {
+        $sql = "UPDATE infoweb SET nama_rental = ?, email = ?, telp = ?, alamat = ?, no_rek = ?, logo = ? WHERE id = 1";
+        $stmt = $koneksi->prepare($sql);
+        if ($stmt->execute([$nama_rental, $email, $telp, $alamat, $no_rek, $logo])) {
+            header('Location: pengaturan/index.php?status=web_success');
+        } else {
+            header('Location: pengaturan/index.php?status=web_error');
+        }
     } else {
-        header('Location: pengaturan/index.php?status=web_error');
+        $sql = "UPDATE infoweb SET nama_rental = ?, email = ?, telp = ?, alamat = ?, no_rek = ? WHERE id = 1";
+        $stmt = $koneksi->prepare($sql);
+        if ($stmt->execute([$nama_rental, $email, $telp, $alamat, $no_rek])) {
+            header('Location: pengaturan/index.php?status=web_success');
+        } else {
+            header('Location: pengaturan/index.php?status=web_error');
+        }
     }
 } elseif ($aksi == 'update_profil') {
     $id_login = $_SESSION["USER"]["id_login"];

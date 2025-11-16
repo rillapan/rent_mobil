@@ -69,6 +69,9 @@
                             <th scope="col" class="text-center">No.</th>
                             <th scope="col" class="text-center">Gambar</th>
                             <th scope="col" class="text-center">Merk</th>
+                            <th scope="col" class="text-center">Nama Mobil</th>
+                            <th scope="col" class="text-center">Tahun</th>
+                            <th scope="col" class="text-center">Kursi</th>
                             <th scope="col" class="text-center">No. Plat</th>
                             <th scope="col" class="text-center">Harga</th>
                             <th scope="col" class="text-center">Status</th>
@@ -78,7 +81,7 @@
                     </thead>
                     <tbody>
                         <?php
-                            $sql = "SELECT * FROM mobil ORDER BY id_mobil DESC";
+                            $sql = "SELECT mobil.* FROM mobil ORDER BY mobil.id_mobil DESC";
                             $row = mysqli_prepare($koneksi, $sql);
                             mysqli_stmt_execute($row);
                             $result_stmt = mysqli_stmt_get_result($row);
@@ -98,7 +101,36 @@
                                 <img src="../../assets/image/<?= htmlspecialchars($isi['gambar']);?>" class="img-thumbnail" style="width: 120px;" alt="Gambar Mobil">
                             </td>
                             <td class="text-center align-middle"><?= htmlspecialchars($isi['merk']);?></td>
-                            <td class="text-center align-middle"><?= htmlspecialchars($isi['no_plat']);?></td>
+                            <td class="text-center align-middle"><?= htmlspecialchars($isi['nama_mobil'] ?? '-');?></td>
+                            <td class="text-center align-middle"><?= htmlspecialchars($isi['tahun_terbit'] ?? '-');?></td>
+                            <td class="text-center align-middle"><?= htmlspecialchars($isi['jumlah_kursi'] ?? '-');?></td>
+                            <td class="text-center align-middle">
+                                <?php
+                                $sql_plat = "SELECT no_plat, status_plat FROM mobil_plat WHERE id_mobil = ? ORDER BY no_plat";
+                                $stmt_plat = mysqli_prepare($koneksi, $sql_plat);
+                                mysqli_stmt_bind_param($stmt_plat, "i", $isi['id_mobil']);
+                                mysqli_stmt_execute($stmt_plat);
+                                $result_plat = mysqli_stmt_get_result($stmt_plat);
+                                $plates = [];
+                                while ($plat = mysqli_fetch_assoc($result_plat)) {
+                                    $plates[] = $plat;
+                                }
+                                mysqli_stmt_close($stmt_plat);
+
+                                if (empty($plates)) {
+                                    echo '<span class="text-muted">-</span>';
+                                } else {
+                                    echo '<div class="d-flex flex-column gap-1">';
+                                    foreach ($plates as $plat) {
+                                        $badge_class = $plat['status_plat'] == 'Tersedia' ? 'badge-available' : 'badge-unavailable';
+                                        $status_text = $plat['status_plat'] == 'Tersedia' ? 'Tersedia' : 'Dipesan';
+                                        $icon_class = $plat['status_plat'] == 'Tersedia' ? 'fa-check-circle' : 'fa-times-circle';
+                                        echo '<span class="badge ' . $badge_class . ' d-inline-flex align-items-center justify-content-center"><i class="fas ' . $icon_class . ' me-1"></i>' . htmlspecialchars($plat['no_plat']) . ' <small>(' . $status_text . ')</small></span>';
+                                    }
+                                    echo '</div>';
+                                }
+                                ?>
+                            </td>
                             <td class="text-center align-middle">Rp<?= number_format(htmlspecialchars($isi['harga']), 0, ',', '.');?></td>
                             <td class="text-center align-middle">
                                 <?php if($isi['status'] == 'Tersedia') { ?>

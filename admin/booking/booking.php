@@ -60,12 +60,13 @@ if(!empty($_GET['id'])){
 }
 
 // Query dengan prepared statement
-$sql = "SELECT mobil.merk, mobil.status AS status_mobil, booking.*,
+$sql = "SELECT mobil.merk, mobil.nama_mobil, mobil.status AS status_mobil, booking.*,
                DATE_ADD(booking.tanggal, INTERVAL booking.lama_sewa DAY) AS tanggal_akhir,
-               supir.nama_supir
+               supir.nama_supir, mobil_plat.no_plat
         FROM booking
         JOIN mobil ON booking.id_mobil = mobil.id_mobil
-        LEFT JOIN supir ON booking.id_supir = supir.id_supir" . $where_clause . "
+        LEFT JOIN supir ON booking.id_supir = supir.id_supir
+        LEFT JOIN mobil_plat ON booking.id_plat = mobil_plat.id_plat" . $where_clause . "
         ORDER BY id_booking DESC";
 
 $row = mysqli_prepare($koneksi, $sql);
@@ -376,7 +377,8 @@ if (!empty($bookings_selesai)) {
                         <tr>
                             <th scope="col" class="text-center">No.</th>
                             <th scope="col">Kode Booking</th>
-                            <th scope="col">Merk Mobil</th>
+                            <th scope="col">Nama Mobil</th>
+                            <th scope="col" style="white-space: nowrap; min-width: 120px;">No. Plat</th>
                             <th scope="col">Supir</th>
                             <th scope="col">Nama</th>
                             <th scope="col">Tanggal Sewa</th>
@@ -391,11 +393,12 @@ if (!empty($bookings_selesai)) {
                         <?php $no = 1; ?>
                         <?php foreach($hasil as $isi): ?>
                         <tr>
-                            <td class="text-center align-middle"><?= $no; ?></td>
+                            <td class="text-center align-middle" style="width: 100px;"><?= $no; ?></td>
                             <td class="align-middle">
                                 <span class="fw-bold text-primary"><?= htmlspecialchars($isi['kode_booking']); ?></span>
                             </td>
-                            <td class="align-middle"><?= htmlspecialchars($isi['merk']); ?></td>
+                            <td class="align-middle"><?= htmlspecialchars($isi['nama_mobil'] ?? $isi['merk']); ?></td>
+                            <td class="align-middle" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;" title="<?= htmlspecialchars($isi['no_plat']); ?>"><?= htmlspecialchars($isi['no_plat']); ?></td>
                             <td class="align-middle">
                                 <?php if (!empty($isi['id_supir']) && !empty($isi['nama_supir'])): ?>
                                     <span class="fw-bold"><?= htmlspecialchars($isi['nama_supir']); ?></span>

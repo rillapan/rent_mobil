@@ -10,7 +10,7 @@
         exit();
     }
     $kode_booking = $_GET['id'];
-    $result_booking = mysqli_query($koneksi, "SELECT * FROM booking WHERE kode_booking = '$kode_booking'");
+    $result_booking = mysqli_query($koneksi, "SELECT booking.*, mobil_plat.no_plat FROM booking LEFT JOIN mobil_plat ON booking.id_plat = mobil_plat.id_plat WHERE booking.kode_booking = '$kode_booking'");
     $hasil = mysqli_fetch_assoc($result_booking);
 
     $id = $hasil['id_mobil'];
@@ -102,7 +102,7 @@
                     </li>
                     <li class="list-group-item">
                         <strong>Merk:</strong> <?= htmlspecialchars($isi['merk']);?><br>
-                        <strong>No. Plat:</strong> <?= htmlspecialchars($isi['no_plat']);?><br>
+                        <strong>No. Plat:</strong> <?= htmlspecialchars($hasil['no_plat']);?><br>
                         <strong>Harga:</strong> Rp<?= number_format(htmlspecialchars($isi['harga']));?>/hari
                     </li>
                     <li class="list-group-item price-item">

@@ -57,8 +57,16 @@ mysqli_stmt_close($stmt_notifikasi);
                                 } elseif (stripos($notif['pesan'], 'Pembayaran Ditolak') !== false || stripos($notif['pesan'], 'pembayaran Anda ditolak') !== false) {
                                     $is_pembayaran_ditolak = true;
                                 }
+                                
+                                // Deteksi jika notifikasi adalah untuk Refund
+                                $is_refund = false;
+                                if (stripos($notif['pesan'], 'Refund Telah Diproses') !== false || 
+                                    stripos($notif['pesan'], 'refund Anda telah disetujui') !== false ||
+                                    stripos($notif['pesan'], 'Uang Anda telah dikembalikan') !== false) {
+                                    $is_refund = true;
+                                }
                             ?>
-                                <li class="list-group-item <?php echo ($notif['status_baca'] == 0) ? 'list-group-item-light' : ''; ?> <?php echo $is_pembayaran_ditolak ? 'border-danger' : ''; ?>">
+                                <li class="list-group-item <?php echo ($notif['status_baca'] == 0) ? 'list-group-item-light' : ''; ?> <?php echo $is_pembayaran_ditolak ? 'border-danger' : ($is_refund ? 'border-success' : ''); ?>">
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div class="flex-grow-1">
                                             <div class="mb-2"><?= $notif['pesan']; ?></div>

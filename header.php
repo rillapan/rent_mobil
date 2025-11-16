@@ -30,7 +30,7 @@
       .modern-header {
         background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
         color: white;
-        padding: 1.5rem 0; /* Increased padding */
+        padding: 0; /* Adjusted to keep header size */
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         margin-bottom: 30px; /* Increased margin */
         position: relative;
@@ -120,8 +120,17 @@
         padding: 1rem 1.5rem;
         position: relative;
         flex-shrink: 0;
+        display: flex;
+        align-items: center;
       }
-      
+
+      .sidebar-logo {
+        width: 40px;
+        height: 40px;
+        margin-right: 10px;
+        object-fit: contain;
+      }
+
       .sidebar-close {
         position: absolute;
         right: 15px;
@@ -133,14 +142,14 @@
         border: none;
         cursor: pointer;
       }
-      
+
       .sidebar-nav {
         padding: 1rem 0;
         margin: 0;
         list-style: none;
         flex-grow: 1;
       }
-      
+
       .sidebar-nav .nav-link {
         display: block;
         padding: 0.8rem 1.5rem;
@@ -150,20 +159,20 @@
         transition: all 0.3s ease;
         font-size: 1.1rem;
       }
-      
+
       .sidebar-nav .nav-link:hover,
       .sidebar-nav .nav-link.active {
         background: var(--primary);
         color: white;
         padding-left: 2rem;
       }
-      
+
       .sidebar-nav .nav-link i {
         margin-right: 10px;
         width: 20px;
         text-align: center;
       }
-      
+
       .sidebar-user {
         padding: 1.5rem;
         background: #f8f9fa;
@@ -545,7 +554,10 @@
     <!-- Sidebar for mobile -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
     <div class="sidebar" id="sidebar">
-      <div class="sidebar-header d-flex align-items-center justify-content-between">
+      <div class="sidebar-header">
+        <?php if(!empty($info_web->logo)){ ?>
+          <img src="assets/image/<?= htmlspecialchars($info_web->logo); ?>" alt="Logo" class="sidebar-logo">
+        <?php } ?>
         <span class="brand-name" style="font-size:1.2rem;margin-bottom:0;"><b><?= $info_web->nama_rental; ?></b> <span>RENTAL</span></span>
         <button class="sidebar-close" id="sidebarClose" aria-label="Tutup Sidebar"><i class="fas fa-times"></i></button>
       </div>
@@ -596,12 +608,12 @@
           <button type="submit" class="btn btn-login"><i class="fas fa-sign-in-alt"></i> Login</button>
         </form>
         <div class="login-modal-footer text-center mt-4 pt-3 border-top">
-          <p>Belum punya akun? <a href="#" id="registerLink">Daftar sekarang</a></p>
+          <p>Belum punya akun? <a href="register.php">Daftar sekarang</a></p>
         </div>
       </div>
     </div>
 
-    <!-- Register Modal -->
+    <!-- Register Modal
     <div class="register-modal" id="headerRegisterModal">
       <div class="register-modal-content">
         <button class="register-modal-close" id="registerModalClose"><i class="fas fa-times"></i></button>
@@ -641,7 +653,7 @@
           <p>Sudah punya akun? <a href="#" id="loginLink">Login di sini</a></p>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- Modern Header -->
     <header class="modern-header">
@@ -649,6 +661,9 @@
         <div class="row align-items-center">
           <div class="col-auto d-flex align-items-center">
             <button class="menu-toggle mr-2" id="menuToggle"><i class="fas fa-bars"></i></button>
+            <?php if(!empty($info_web->logo)){ ?>
+              <img src="assets/image/<?= htmlspecialchars($info_web->logo); ?>" alt="Logo" style="width: 100px; height: 100px; margin-right: 60px; object-fit: contain;">
+            <?php } ?>
             <h2 class="brand-name">
                 <b><?= $info_web->nama_rental; ?></b> <span>RENTAL</span>
             </h2>

@@ -48,58 +48,9 @@
         
         <?php if(!empty($_GET['id']) && isset($hasil)) { ?>
         
-        <div class="col-lg-4 col-md-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-secondary text-white d-flex align-items-center">
-                    <h5 class="card-title mb-0"><i class="fa fa-file-text-o"></i> Detail Pembayaran</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-borderless table-sm">
-                        <tbody>
-                            <tr>
-                                <th scope="row">No. Rekening</th>
-                                <td>:</td>
-                                <td><?= htmlspecialchars($hsl['no_rekening'] ?? '-');?></td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Atas Nama</th>
-                                <td>:</td>
-                                <td><?= htmlspecialchars($hsl['nama_rekening'] ?? '-');?></td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Nominal</th>
-                                <td>:</td>
-                                <td>Rp<?= number_format(htmlspecialchars($hsl['nominal'] ?? 0), 0, ',', '.');?></td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Tgl. Transfer</th>
-                                <td>:</td>
-                                <td><?= htmlspecialchars($hsl['tanggal'] ?? '-');?></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <div class="card shadow-sm mt-4">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0"><?= htmlspecialchars($isi['merk']);?></h5>
-                </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex align-items-center">
-                        <?php if($isi['status'] == 'Tersedia'){?>
-                            <span class="badge bg-success"><i class="fa fa-check-circle"></i> Tersedia</span>
-                        <?php } else {?>
-                            <span class="badge bg-danger"><i class="fa fa-times-circle"></i> Tidak Tersedia</span>
-                        <?php } ?>
-                    </li>
-                   
-                    <li class="list-group-item bg-light"><i class="fa fa-money text-dark"></i> Rp. <?= number_format(htmlspecialchars($isi['harga']), 0, ',', '.');?> / hari</li>
-                </ul>
-            </div>
-        </div>
+
         
-        <div class="col-lg-8 col-md-12">
+        <div class="col-lg-12 col-md-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-info text-white d-flex align-items-center">
                     <h5 class="card-title mb-0"><i class="fa fa-info-circle"></i> Detail Booking & Status Mobil</h5>
@@ -143,7 +94,7 @@
                                     <td>:</td>
                                     <td>Rp<?= number_format(htmlspecialchars($hasil['total_harga']), 0, ',', '.');?></td>
                                 </tr>
-                                <tr>
+                                <!-- <tr>
                                     <th scope="row">Status Mobil</th>
                                     <td>:</td>
                                     <td>
@@ -152,7 +103,7 @@
                                             <option value="Tidak Tersedia" <?= ($isi['status'] == 'Tidak Tersedia') ? 'selected' : '';?>>Tidak Tersedia (Pinjam)</option>
                                         </select>
                                     </td>
-                                </tr>
+                                </tr> -->
                                 <tr>
                                     <th scope="row">Status Pengembalian</th>
                                     <td>:</td>

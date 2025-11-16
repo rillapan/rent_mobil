@@ -47,10 +47,11 @@ $sql_refund = "SELECT
         b.total_harga,
         b.konfirmasi_pembayaran,
         b.no_tlp,
+        b.nama,
         b.nama AS nama_booking,
         b.alamat,
         mobil.merk AS merk_mobil,
-        mobil.no_plat,
+        mobil_plat.no_plat,
         mobil.harga AS harga_mobil,
         l.nama_pengguna,
         l.no_hp AS user_no_hp,
@@ -58,7 +59,8 @@ $sql_refund = "SELECT
     FROM refund_requests rr
     JOIN booking b ON rr.id_booking = b.id_booking
     LEFT JOIN mobil ON b.id_mobil = mobil.id_mobil
-    LEFT JOIN login l ON rr.id_login = l.id_login
+    LEFT JOIN mobil_plat ON b.id_plat = mobil_plat.id_plat
+    LEFT JOIN login l ON b.id_login = l.id_login
     LEFT JOIN booking_rejections br ON b.id_booking = br.id_booking
     ORDER BY rr.status = 'Menunggu Refund' DESC, rr.created_at DESC";
 $stmt_refund = mysqli_prepare($koneksi, $sql_refund);
@@ -295,20 +297,12 @@ function format_tanggal($tanggal) {
                     <?php endif; ?>
 
                     <div class="refund-actions">
-                        <button 
-                            class="btn btn-success"
-                            data-toggle="modal"
-                            data-target="#approveRefundModal"
-                            data-refund='<?= htmlspecialchars(json_encode([
-                                'id' => $refund['id'],
-                                'kode_booking' => $refund['kode_booking'],
-                                'nama' => $refund['nama_pelanggan'] ?? $refund['nama_pengguna'] ?? $refund['nama_booking'],
-                                'total' => $refund['total_pembayaran'] ?: $refund['total_harga'],
-                                'rekening' => $refund['no_rekening_refund'],
-                                'atas_nama' => $refund['nama_rekening_refund']
-                            ]), ENT_QUOTES, 'UTF-8'); ?>'>
+                        <a href="process_form.php?id=<?= $refund['id']; ?>" class="btn btn-success">
                             <i class="fas fa-check-circle me-1"></i> Proses Refund
-                        </button>
+                        </a>
+                        <a href="reject_form.php?id=<?= $refund['id']; ?>" class="btn btn-danger">
+                            <i class="fas fa-times-circle me-1"></i> Tolak Refund
+                        </a>
                     </div>
                 </div>
             </div>
@@ -408,17 +402,104 @@ function format_tanggal($tanggal) {
     </div>
 </div>
 
+<!-- Modal Tolak Refund -->
+<div class="modal fade" id="rejectRefundModal" tabindex="-1" role="dialog" aria-labelledby="rejectRefundModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="rejectRefundModalLabel"><i class="fas fa-times-circle me-2"></i>Tolak Pengajuan Refund</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form method="post" action="proses.php?id=reject_refund" id="rejectRefundForm">
+                <div class="modal-body">
+                    <input type="hidden" name="refund_id" id="modalRejectRefundId">
+                    <input type="hidden" name="kode_booking" id="modalRejectKodeBooking">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Pastikan alasan penolakan refund jelas dan dapat diterima pelanggan.
+                    </div>
+                    <div class="form-group">
+                        <label for="modalRejectNamaPelanggan">Nama Pelanggan</label>
+                        <input type="text" class="form-control bg-light" id="modalRejectNamaPelanggan" readonly>
+                        <small class="text-muted">Nama pelanggan diambil dari data booking.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalRejectReason">Alasan Penolakan Refund <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="modalRejectReason" name="alasan_penolakan" rows="4" placeholder="Jelaskan alasan penolakan refund secara detail..." required></textarea>
+                        <small class="text-muted">Alasan ini akan dikirim sebagai notifikasi ke pelanggan.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalRejectCatatanAdmin">Catatan Admin (Opsional)</label>
+                        <textarea class="form-control" id="modalRejectCatatanAdmin" name="catatan_admin" rows="3" placeholder="Masukkan catatan tambahan untuk arsip internal..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-paper-plane me-1"></i> Tolak Refund
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
+    // Modal Proses Refund
     $('#approveRefundModal').on('show.bs.modal', function (event) {
         const button = $(event.relatedTarget);
-        const refundData = button.data('refund');
-        if (!refundData) return;
+        
+        // Ambil data dari data attributes
+        const refundId = button.data('refund-id');
+        const kodeBooking = button.data('kode-booking') || '';
+        const namaBooking = button.data('nama-booking') || '';
+        const namaPelanggan = button.data('nama-pelanggan') || '';
+        const namaPengguna = button.data('nama-pengguna') || '';
+        const totalPembayaran = parseFloat(button.data('total-pembayaran')) || 0;
+        const totalHarga = parseFloat(button.data('total-harga')) || 0;
+        
+        // Set nilai ke form
+        $('#modalRefundId').val(refundId);
+        $('#modalKodeBooking').val(kodeBooking);
+        
+        // Nama pelanggan: prioritas nama_pelanggan (dari refund_requests), kemudian nama_pengguna, kemudian nama_booking
+        const namaCustomer = namaPelanggan || namaPengguna || namaBooking || '';
+        $('#modalNamaPelanggan').val(namaCustomer);
+        
+        // Format rupiah untuk display
+        const formatRupiah = (num) => {
+            if (!num || num === 0) return 'Rp 0';
+            return 'Rp ' + Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        };
+        
+        // Set total pembayaran (readonly) - jumlah yang dikirim pelanggan
+        // Gunakan total_pembayaran jika ada, jika tidak gunakan total_harga
+        const nominalPembayaran = totalPembayaran > 0 ? totalPembayaran : totalHarga;
+        $('#modalTotalPembayaran').val(formatRupiah(nominalPembayaran));
+        
+        // Set nominal refund default sama dengan total pembayaran (jumlah yang dikirim pelanggan)
+        $('#modalNominalRefund').val(Math.round(nominalPembayaran));
+    });
 
-        $('#modalRefundId').val(refundData.id);
-        $('#modalKodeBooking').val(refundData.kode_booking);
-        $('#modalNamaPelanggan').val(refundData.nama);
-        const totalAmount = parseFloat(refundData.total);
-        $('#modalNominalRefund').val(!isNaN(totalAmount) ? Math.round(totalAmount) : '');
+    // Modal Tolak Refund
+    $('#rejectRefundModal').on('show.bs.modal', function (event) {
+        const button = $(event.relatedTarget);
+        
+        // Ambil data dari data attributes
+        const refundId = button.data('refund-id');
+        const kodeBooking = button.data('kode-booking') || '';
+        const namaBooking = button.data('nama-booking') || '';
+        const namaPelanggan = button.data('nama-pelanggan') || '';
+        const namaPengguna = button.data('nama-pengguna') || '';
+        
+        // Set nilai ke form
+        $('#modalRejectRefundId').val(refundId);
+        $('#modalRejectKodeBooking').val(kodeBooking);
+        
+        // Nama pelanggan: prioritas nama_pelanggan (dari refund_requests), kemudian nama_pengguna, kemudian nama_booking
+        const namaCustomer = namaPelanggan || namaPengguna || namaBooking || '';
+        $('#modalRejectNamaPelanggan').val(namaCustomer);
     });
 </script>
 
@@ -444,7 +525,17 @@ function format_tanggal($tanggal) {
         });
     });
 </script>
+<?php elseif (isset($_GET['status']) && $_GET['status'] === 'refundrejected') : ?>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            title: 'Refund Ditolak!',
+            text: 'Pengajuan refund telah ditolak dan notifikasi telah dikirim ke pelanggan.',
+            icon: 'warning',
+            confirmButtonText: 'OK'
+        });
+    });
+</script>
 <?php endif; ?>
 
 <?php include '../footer.php'; ?>
-

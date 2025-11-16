@@ -3,10 +3,23 @@ session_start();
 require 'koneksi/koneksi.php';
 include 'header.php';
 
-// Ambil daftar supir yang tersedia
-$result = mysqli_query($koneksi, "SELECT * FROM supir WHERE status = 'Tersedia' ORDER BY nama_supir ASC");
+// Ambil daftar semua supir dengan status berdasarkan booking aktif
+$sql = "SELECT s.*, b.kode_booking, b.nama, b.no_tlp, b.tanggal, DATE_ADD(b.tanggal, INTERVAL b.lama_sewa DAY) AS tanggal_akhir
+        FROM supir s
+        LEFT JOIN booking b ON b.id_booking = (
+            SELECT id_booking FROM booking
+            WHERE id_supir = s.id_supir
+            AND konfirmasi_pembayaran IN ('Pembayaran Diterima', 'Sedang Diproses')
+            AND DATE_ADD(tanggal, INTERVAL lama_sewa DAY) > CURDATE()
+            AND (status_pengembalian IS NULL OR status_pengembalian = '' OR status_pengembalian = 'Belum Dikembalikan')
+            ORDER BY tanggal DESC LIMIT 1
+        )
+        ORDER BY s.nama_supir ASC";
+$result = mysqli_query($koneksi, $sql);
 $supir = [];
 while ($row = mysqli_fetch_assoc($result)) {
+    // Tentukan status berdasarkan adanya booking aktif
+    $row['status_dinamis'] = (!empty($row['kode_booking'])) ? 'Sedang Digunakan' : $row['status'];
     $supir[] = $row;
 }
 ?>
@@ -47,19 +60,41 @@ while ($row = mysqli_fetch_assoc($result)) {
                                                 <?= htmlspecialchars($s['deskripsi']) ?>
                                             </p>
                                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                                <span class="badge bg-success">
-                                                    <i class="fas fa-check-circle"></i> Tersedia
-                                                </span>
+                                                <?php if($s['status_dinamis'] == 'Tersedia') { ?>
+                                                    <span class="badge bg-success">
+                                                        <i class="fas fa-check-circle"></i> Tersedia
+                                                    </span>
+                                                <?php } elseif($s['status_dinamis'] == 'Sedang Digunakan') { ?>
+                                                    <span class="badge bg-info">
+                                                        <i class="fas fa-clock"></i> Sedang Digunakan
+                                                    </span>
+                                                <?php } else { ?>
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-times-circle"></i> Close
+                                                    </span>
+                                                <?php } ?>
                                                 <span class="text-primary fw-bold">
                                                     Rp<?= number_format($s['harga_sewa']) ?>/hari
                                                 </span>
                                             </div>
-                                            <button type="button" class="btn btn-primary w-100 pilih-supir"
-                                                    data-id="<?= $s['id_supir'] ?>"
-                                                    data-nama="<?= htmlspecialchars($s['nama_supir']) ?>"
-                                                    data-harga="<?= $s['harga_sewa'] ?>">
-                                                <i class="fas fa-check me-1"></i>Pilih Supir
-                                            </button>
+                                            <?php if($s['status_dinamis'] == 'Tersedia') { ?>
+                                                <button type="button" class="btn btn-primary w-100 pilih-supir"
+                                                        data-id="<?= $s['id_supir'] ?>"
+                                                        data-nama="<?= htmlspecialchars($s['nama_supir']) ?>"
+                                                        data-harga="<?= $s['harga_sewa'] ?>">
+                                                    <i class="fas fa-check me-1"></i>Pilih Supir
+                                                </button>
+                                            <?php } else { ?>
+                                                <button type="button" class="btn btn-secondary w-100" disabled>
+                                                    <i class="fas fa-ban me-1"></i>Tidak Tersedia
+                                                </button>
+                                            <?php } ?>
+                                            <?php if($s['status_dinamis'] == 'Sedang Digunakan' && !empty($s['nama'])) { ?>
+                                                <div class="mt-2 p-2 bg-light rounded small">
+                                                    <div><i class="fas fa-user me-1"></i><strong>Pelanggan:</strong> <?= htmlspecialchars($s['nama']) ?></div>
+                                                    <div><i class="fas fa-calendar me-1"></i><strong>Periode:</strong> <?= date('d/m/Y', strtotime($s['tanggal'])) ?> - <?= date('d/m/Y', strtotime($s['tanggal_akhir'])) ?></div>
+                                                </div>
+                                            <?php } ?>
                                         </div>
                                     </div>
                                 </div>

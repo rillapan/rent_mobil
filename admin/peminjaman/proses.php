@@ -23,7 +23,7 @@ if($_GET['id'] == 'konfirmasi')
     $booking_updated = mysqli_stmt_execute($stmt_booking);
     mysqli_stmt_close($stmt_booking);
 
-    // Jika status pengembalian adalah 'Dikembalikan', insert ke tabel pengembalian dan update status supir
+    // Jika status pengembalian adalah 'Dikembalikan', insert ke tabel pengembalian dan update status supir serta status plat
     if ($status_pengembalian == 'Dikembalikan') {
         $tanggal_pengembalian = $_POST['tanggal_pengembalian'] ?? date('Y-m-d');
         $denda = $_POST['denda'] ?? 0;
@@ -52,7 +52,43 @@ if($_GET['id'] == 'konfirmasi')
             mysqli_stmt_close($stmt_update_supir);
         }
 
-        if ($mobil_updated && $booking_updated && $pengembalian_inserted && $supir_updated) {
+        // Update status plat kembali ke 'Tersedia' jika ada plat yang digunakan
+        $plat_updated = true;
+        $sql_plat = "SELECT id_plat FROM booking WHERE kode_booking = ?";
+        $stmt_plat_check = mysqli_prepare($koneksi, $sql_plat);
+        mysqli_stmt_bind_param($stmt_plat_check, "s", $kode_booking);
+        mysqli_stmt_execute($stmt_plat_check);
+        $result_stmt_plat = mysqli_stmt_get_result($stmt_plat_check);
+        $booking_plat_data = mysqli_fetch_assoc($result_stmt_plat);
+        mysqli_stmt_close($stmt_plat_check);
+
+        if (!empty($booking_plat_data['id_plat'])) {
+            $sql_update_plat = "UPDATE mobil_plat SET status_plat = 'Tersedia' WHERE id_plat = ?";
+            $stmt_update_plat = mysqli_prepare($koneksi, $sql_update_plat);
+            mysqli_stmt_bind_param($stmt_update_plat, "i", $booking_plat_data['id_plat']);
+            $plat_updated = mysqli_stmt_execute($stmt_update_plat);
+            mysqli_stmt_close($stmt_update_plat);
+
+            // Hitung ulang status mobil berdasarkan ketersediaan plat
+            $sql_count_plat = "SELECT COUNT(*) as available_count FROM mobil_plat WHERE id_mobil = ? AND status_plat = 'Tersedia'";
+            $stmt_count_plat = mysqli_prepare($koneksi, $sql_count_plat);
+            mysqli_stmt_bind_param($stmt_count_plat, "i", $id_mobil);
+            mysqli_stmt_execute($stmt_count_plat);
+            $result_count = mysqli_stmt_get_result($stmt_count_plat);
+            $count_data = mysqli_fetch_assoc($result_count);
+            $available_count = $count_data['available_count'];
+            mysqli_stmt_close($stmt_count_plat);
+
+            // Update status mobil: jika ada plat tersedia, set 'Tersedia', else 'Tidak Tersedia'
+            $new_status = $available_count > 0 ? 'Tersedia' : 'Tidak Tersedia';
+            $sql_update_mobil_status = "UPDATE mobil SET status = ? WHERE id_mobil = ?";
+            $stmt_update_mobil = mysqli_prepare($koneksi, $sql_update_mobil_status);
+            mysqli_stmt_bind_param($stmt_update_mobil, "si", $new_status, $id_mobil);
+            mysqli_stmt_execute($stmt_update_mobil);
+            mysqli_stmt_close($stmt_update_mobil);
+        }
+
+        if ($mobil_updated && $booking_updated && $pengembalian_inserted && $supir_updated && $plat_updated) {
             echo "<script>window.location='peminjaman.php?id=$kode_booking&status=pengembalian_success';</script>";
         } else {
             echo "<script>window.location='peminjaman.php?id=$kode_booking&status=update_error';</script>";

@@ -17,7 +17,7 @@ include '../header.php';
                     <?php } elseif(isset($_GET['status']) && $_GET['status'] === 'web_error'){ ?>
                       <div class="alert alert-danger" role="alert">Terjadi kesalahan saat memperbarui Info Website.</div>
                     <?php } ?>
-                    <form action="../proses.php?aksi=update_web" method="post">
+                    <form action="../proses.php?aksi=update_web" method="post" enctype="multipart/form-data">
                         <div class="mb-3">
                             <label for="nama_rental" class="form-label">Nama Rental</label>
                             <input type="text" class="form-control" value="<?= htmlspecialchars($info_web->nama_rental); ?>" name="nama_rental" id="nama_rental" placeholder="Masukkan nama rental" required/>
@@ -40,6 +40,13 @@ include '../header.php';
                             <label for="no_rek" class="form-label">Nomor Rekening</label>
                             <textarea class="form-control" name="no_rek" id="no_rek" rows="2" placeholder="Contoh: BCA 123-456-7890 an. Nama Anda" required><?= htmlspecialchars($info_web->no_rek); ?></textarea>
                         </div>
+                        <div class="mb-3">
+                            <label for="logo" class="form-label">Logo Website</label>
+                            <input type="file" class="form-control" name="logo" id="logo" accept="image/*">
+                            <?php if(!empty($info_web->logo)){ ?>
+                                <img src="../../assets/image/<?php echo htmlspecialchars($info_web->logo); ?>" alt="Logo" style="max-width: 100px; margin-top: 10px;">
+                            <?php } ?>
+                        </div>
                         <div class="d-grid gap-2">
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>Simpan Perubahan
@@ -53,39 +60,5 @@ include '../header.php';
 
     </div>
 
-    <div class="row g-4 mt-4">
-        <div class="col-lg-6 col-md-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-info text-white d-flex align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i> Informasi Pembayaran</h5>
-                </div>
-                <div class="card-body">
-                    <p class="mb-3">Kelola metode pembayaran yang tersedia untuk pelanggan.</p>
-                    <div class="d-grid gap-2">
-                        <a href="payment_methods.php" class="btn btn-info">
-                            <i class="fas fa-cog me-2"></i>Kelola Metode Pembayaran
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-6 col-md-12">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white d-flex align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i> Metode Pembayaran</h5>
-                </div>
-                <div class="card-body">
-                    <p class="mb-3">Kelola metode pembayaran yang tersedia untuk pelanggan.</p>
-                    <div class="d-grid gap-2">
-                        <a href="payment_methods.php" class="btn btn-success">
-                            <i class="fas fa-cog me-2"></i>Kelola Metode Pembayaran
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
 </div>
 <?php include '../footer.php'; ?>

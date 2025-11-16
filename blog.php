@@ -3,12 +3,30 @@
     session_start();
     require 'koneksi/koneksi.php';
     include 'header.php';
+    // Determine sort order
+    $sort = isset($_GET['sort']) ? strip_tags($_GET['sort']) : 'id_mobil DESC';
+    $allowed_sorts = [
+        'harga_asc' => 'harga ASC',
+        'harga_desc' => 'harga DESC',
+        'tahun_asc' => 'tahun_terbit ASC',
+        'tahun_desc' => 'tahun_terbit DESC',
+        'kursi_asc' => 'jumlah_kursi ASC',
+        'kursi_desc' => 'jumlah_kursi DESC',
+        'id_mobil DESC' => 'id_mobil DESC'
+    ];
+    $order_by = isset($allowed_sorts[$sort]) ? $allowed_sorts[$sort] : 'id_mobil DESC';
+
+    // Determine status filter
+    $status_filter = isset($_GET['status']) ? strip_tags($_GET['status']) : 'semua';
+    $allowed_statuses = ['semua', 'tersedia', 'tidak_tersedia'];
+    $status_filter = in_array($status_filter, $allowed_statuses) ? $status_filter : 'semua';
+
     if(isset($_GET['cari']))
     {
         $cari = strip_tags($_GET['cari']);
-        $stmt = mysqli_prepare($koneksi, 'SELECT * FROM mobil WHERE merk LIKE ? ORDER BY id_mobil DESC');
+        $stmt = mysqli_prepare($koneksi, "SELECT * FROM mobil WHERE nama_mobil LIKE ? OR merk LIKE ? ORDER BY $order_by");
         $search_term = '%' . $cari . '%';
-        mysqli_stmt_bind_param($stmt, "s", $search_term);
+        mysqli_stmt_bind_param($stmt, "ss", $search_term, $search_term);
         mysqli_stmt_execute($stmt);
         $result_stmt = mysqli_stmt_get_result($stmt);
         $query = [];
@@ -17,11 +35,37 @@
         }
         mysqli_stmt_close($stmt);
     }else{
-        $result = mysqli_query($koneksi, 'SELECT * FROM mobil ORDER BY id_mobil DESC');
+        $result = mysqli_query($koneksi, "SELECT * FROM mobil ORDER BY $order_by");
         $query = [];
         while ($row = mysqli_fetch_assoc($result)) {
             $query[] = $row;
         }
+    }
+
+    // Filter by status if not 'semua'
+    if ($status_filter !== 'semua') {
+        $filtered_query = [];
+        foreach ($query as $isi) {
+            $sql_plat = "SELECT COUNT(*) as available_count FROM mobil_plat WHERE id_mobil = ? AND status_plat = 'Tersedia'";
+            $stmt_plat = mysqli_prepare($koneksi, $sql_plat);
+            mysqli_stmt_bind_param($stmt_plat, "i", $isi['id_mobil']);
+            mysqli_stmt_execute($stmt_plat);
+            $result_plat = mysqli_stmt_get_result($stmt_plat);
+            $plat_data = mysqli_fetch_assoc($result_plat);
+            $available_plates_count = $plat_data['available_count'];
+            if ($isi['status'] == 'Tidak Tersedia') {
+                $dynamic_status = 'Tidak Tersedia';
+            } else {
+                $dynamic_status = $available_plates_count > 0 ? 'Tersedia' : 'Tidak Tersedia';
+            }
+            mysqli_stmt_close($stmt_plat);
+
+            if (($status_filter == 'tersedia' && $dynamic_status == 'Tersedia') ||
+                ($status_filter == 'tidak_tersedia' && $dynamic_status == 'Tidak Tersedia')) {
+                $filtered_query[] = $isi;
+            }
+        }
+        $query = $filtered_query;
     }
 ?>
 <style>
@@ -204,6 +248,39 @@
         color: white; /* Ensure text remains white */
         text-shadow: 0 0 5px rgba(255,255,255,0.5); /* Subtle text shadow */
     }
+    .badge-custom {
+        margin-left: 50px;
+        margin-bottom: 10px;
+        background: #f8f9fa;
+        color: #495057;
+        font-weight: bold;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        display: inline-flex;
+        align-items: center;
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: 1px solid #dee2e6;
+        position: relative;
+        overflow: hidden;
+    }
+    .badge-custom::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+    .badge-custom:hover::before {
+        left: 100%;
+    }
+    .badge-custom i {
+        margin-right: 0.5rem;
+    }
 </style>
 <br>
 <br>
@@ -221,7 +298,7 @@
         ?>
         </h4>
 
-        <!-- Search Form -->
+        <!-- Search and Filter Form -->
         <div class="row mt-3 mb-4">
             <div class="col-12">
                 <div class="card shadow-sm">
@@ -235,17 +312,37 @@
                                         </span>
                                     </div>
                                     <input type="text" name="cari" class="form-control form-control-lg border-0"
-                                           placeholder="Cari mobil berdasarkan merk..."
+                                           placeholder="Cari mobil berdasarkan nama atau merk..."
                                            value="<?php echo isset($_GET['cari']) ? htmlspecialchars($_GET['cari']) : ''; ?>">
                                 </div>
                             </div>
-                            <div class="d-flex gap-2">
+                            <div class="d-flex gap-2 align-items-end">
+                                <div class="form-group mb-0">
+                                    <label for="status" class="sr-only">Status</label>
+                                    <select name="status" id="status" class="form-control form-control-lg">
+                                        <option value="semua" <?php echo (isset($_GET['status']) && $_GET['status'] == 'semua') ? 'selected' : ''; ?>>Semua Status</option>
+                                        <option value="tersedia" <?php echo (isset($_GET['status']) && $_GET['status'] == 'tersedia') ? 'selected' : ''; ?>>Tersedia</option>
+                                        <option value="tidak_tersedia" <?php echo (isset($_GET['status']) && $_GET['status'] == 'tidak_tersedia') ? 'selected' : ''; ?>>Tidak Tersedia</option>
+                                    </select>
+                                </div>
+                                <div class="form-group mb-0">
+                                    <label for="sort" class="sr-only">Urutkan Berdasarkan</label>
+                                    <select name="sort" id="sort" class="form-control form-control-lg">
+                                        <option value="id_mobil DESC" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'id_mobil DESC') ? 'selected' : ''; ?>>Default</option>
+                                        <option value="harga_asc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'harga_asc') ? 'selected' : ''; ?>>Harga Terendah</option>
+                                        <option value="harga_desc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'harga_desc') ? 'selected' : ''; ?>>Harga Tertinggi</option>
+                                        <option value="tahun_desc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'tahun_desc') ? 'selected' : ''; ?>>Tahun Terbaru</option>
+                                        <option value="tahun_asc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'tahun_asc') ? 'selected' : ''; ?>>Tahun Terlama</option>
+                                        <option value="kursi_asc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'kursi_asc') ? 'selected' : ''; ?>>Kursi Terkecil</option>
+                                        <option value="kursi_desc" <?php echo (isset($_GET['sort']) && $_GET['sort'] == 'kursi_desc') ? 'selected' : ''; ?>>Kursi Terbesar</option>
+                                    </select>
+                                </div>
                                 <button type="submit" class="btn btn-primary-custom btn-lg px-4">
                                     <i class="fas fa-search mr-2"></i>Cari
                                 </button>
-                                <?php if(isset($_GET['cari'])): ?>
+                                <?php if(isset($_GET['cari']) || isset($_GET['sort']) || isset($_GET['status'])): ?>
                                 <a href="blog.php" class="btn btn-outline-secondary btn-lg px-4">
-                                    <i class="fas fa-times mr-2"></i>Hapus Pencarian
+                                    <i class="fas fa-times mr-2"></i>Reset
                                 </a>
                                 <?php endif; ?>
                             </div>
@@ -256,22 +353,48 @@
         </div>
 
         <div class="row mt-3">
-        <?php 
+        <?php
             $no =1;
             if (count($query) > 0) {
                 foreach($query as $isi)
                 {
+                    $sql_plat = "SELECT COUNT(*) as available_count FROM mobil_plat WHERE id_mobil = ? AND status_plat = 'Tersedia'";
+                    $stmt_plat = mysqli_prepare($koneksi, $sql_plat);
+                    mysqli_stmt_bind_param($stmt_plat, "i", $isi['id_mobil']);
+                    mysqli_stmt_execute($stmt_plat);
+                    $result_plat = mysqli_stmt_get_result($stmt_plat);
+                    $plat_data = mysqli_fetch_assoc($result_plat);
+                    $available_plates_count = $plat_data['available_count'];
+                    if ($isi['status'] == 'Tidak Tersedia') {
+                        $dynamic_status = 'Tidak Tersedia';
+                    } else {
+                        $dynamic_status = $available_plates_count > 0 ? 'Tersedia' : 'Tidak Tersedia';
+                    }
+                    mysqli_stmt_close($stmt_plat);
         ?>
             <div class="col-lg-4 col-md-6 mb-4">
                 <div class="car-card card h-100">
-                    <img src="assets/image/<?= htmlspecialchars($isi['gambar']); ?>" class="card-img-top" alt="<?= htmlspecialchars($isi['merk']); ?>">
+                    <img src="assets/image/<?= htmlspecialchars($isi['gambar']); ?>" class="card-img-top" alt="<?= htmlspecialchars($isi['nama_mobil'] ?? $isi['merk']); ?>">
                     <div class="card-body pt-3 pb-0">
-                        <h5 class="card-title mb-2"><?= htmlspecialchars($isi['merk']); ?></h5>
+                        <h5 class="card-title mb-2"><?= htmlspecialchars($isi['nama_mobil'] ?? $isi['merk']); ?></h5>
+                        <p class="card-text mb-1">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>Tahun: <?= htmlspecialchars($isi['tahun_terbit'] ?? 'N/A'); ?> |
+                                <i class="fas fa-users me-1"></i>Kursi: <?= htmlspecialchars($isi['jumlah_kursi'] ?? 'N/A'); ?>
+                            </small>
+                        </p>
                     </div>
                     <ul class="list-group list-group-flush">
-                        <li class="list-group-item <?php echo $isi['status'] == 'Tersedia' ? 'status-available' : 'status-not-available'; ?>">
-                            <i class="fas <?php echo $isi['status'] == 'Tersedia' ? 'fa-check-circle' : 'fa-times-circle'; ?>"></i> 
-                            <?= htmlspecialchars($isi['status']); ?>
+                        <li class="list-group-item <?php echo $dynamic_status == 'Tersedia' ? 'status-available' : 'status-not-available'; ?>">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas <?php echo $dynamic_status == 'Tersedia' ? 'fa-check-circle' : 'fa-times-circle'; ?>"></i>
+                                    <?= htmlspecialchars($dynamic_status); ?>
+                                </div>
+                                <?php if ($dynamic_status == 'Tersedia') { ?>
+                                    <span class="badge-custom"><i class="fas fa-car"></i>Plat tersedia: <?= $available_plates_count; ?></span>
+                                <?php } ?>
+                            </div>
                         </li>
                         <li class="list-group-item price-item">
                             <i class="fas fa-money-bill-wave"></i> Rp. <?= number_format(htmlspecialchars($isi['harga'])); ?>/ hari
@@ -313,7 +436,7 @@
                             <a href="detail.php?id=<?= htmlspecialchars($isi['id_mobil']); ?>" class="btn btn-info-custom">
                                 <i class="fas fa-info-circle"></i> Detail
                             </a>
-                            <a href="booking.php?id=<?= htmlspecialchars($isi['id_mobil']); ?>" class="btn btn-success-custom">
+                            <a href="booking.php?id=<?= htmlspecialchars($isi['id_mobil']); ?>" class="btn btn-success-custom <?php echo $dynamic_status != 'Tersedia' ? 'disabled' : ''; ?>">
                                 <i class="fas fa-calendar-check"></i> Booking
                             </a>
                         </div>

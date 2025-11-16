@@ -211,9 +211,14 @@
                 <div class="row g-4">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="no_plat" class="form-label">Nomor Plat</label>
-                            <input type="text" class="form-control" id="no_plat" name="no_plat" placeholder="Contoh: B 1234 ABC" required>
-                            <div class="form-text">Masukkan nomor plat kendaraan dengan format yang benar</div>
+                            <label class="form-label">Nomor Plat</label>
+                            <div id="plat-container">
+                                <!-- Dynamic inputs will be added here -->
+                            </div>
+                            <button type="button" class="btn btn-outline-primary mt-3" id="add-plat">
+                                <i class="fas fa-plus me-2"></i>Tambah Plat Nomor
+                            </button>
+                            <div class="form-text">Tambahkan satu atau lebih nomor plat untuk mobil ini.</div>
                         </div>
 
                         <div class="form-group mt-3">
@@ -232,6 +237,24 @@
                                 ?>
                             </select>
                             <div class="form-text">Pilih merk mobil dari daftar yang tersedia</div>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label for="nama_mobil" class="form-label">Nama Mobil</label>
+                            <input type="text" class="form-control" id="nama_mobil" name="nama_mobil" placeholder="Contoh: Toyota Avanza 1.3 E MT" required>
+                            <div class="form-text">Masukkan nama lengkap mobil</div>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label for="tahun_terbit" class="form-label">Tahun Terbit</label>
+                            <input type="number" class="form-control" id="tahun_terbit" name="tahun_terbit" placeholder="Contoh: 2020" min="1900" max="<?php echo date('Y'); ?>" required>
+                            <div class="form-text">Masukkan tahun terbit mobil</div>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <label for="jumlah_kursi" class="form-label">Jumlah Kursi</label>
+                            <input type="number" class="form-control" id="jumlah_kursi" name="jumlah_kursi" placeholder="Contoh: 5" min="1" required>
+                            <div class="form-text">Masukkan jumlah kursi mobil</div>
                         </div>
 
                         <div class="form-group mt-3">
@@ -349,6 +372,45 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Plat Nomor Management
+    const platContainer = document.getElementById('plat-container');
+    const addPlatButton = document.getElementById('add-plat');
+
+    const addPlatInput = (value = '') => {
+        const platCount = platContainer.children.length + 1;
+        const inputGroup = document.createElement('div');
+        inputGroup.classList.add('input-group', 'mb-3');
+        inputGroup.innerHTML = `
+            <span class="input-group-text">${platCount}</span>
+            <input type="text" class="form-control" name="no_plat[]" value="${value}" placeholder="Contoh: B 1234 ABC" required>
+            <button type="button" class="btn btn-danger remove-plat">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        platContainer.appendChild(inputGroup);
+    };
+
+    addPlatButton.addEventListener('click', () => addPlatInput());
+
+    platContainer.addEventListener('click', function(e) {
+        const removeButton = e.target.closest('.remove-plat');
+        if (removeButton) {
+            if (platContainer.children.length > 1) {
+                removeButton.closest('.input-group').remove();
+                // Update numbering
+                const platInputs = platContainer.querySelectorAll('.input-group-text');
+                platInputs.forEach((input, index) => {
+                    input.textContent = index + 1;
+                });
+            } else {
+                alert('Setidaknya harus ada satu nomor plat.');
+            }
+        }
+    });
+
+    // Add one plat input on page load
+    addPlatInput();
+
     // Keunggulan Management
     const container = document.getElementById('keunggulan-container');
     const addButton = document.getElementById('add-keunggulan');

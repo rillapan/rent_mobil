@@ -1,0 +1,1 @@
+ALTER TABLE `mobil` ADD `nama_mobil` VARCHAR(255) NULL DEFAULT NULL AFTER `merk`;

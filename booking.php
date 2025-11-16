@@ -312,10 +312,17 @@
             <!-- Mobil Information Card -->
             <div class="col-lg-4 mb-4">
                 <div class="card h-100">
-                    <img src="assets/image/<?php echo $isi['gambar'];?>" class="car-image" alt="<?php echo $isi['merk'];?>">
+                    <img src="assets/image/<?php echo $isi['gambar'];?>" class="car-image" alt="<?php echo $isi['nama_mobil'] ?? $isi['merk'];?>">
                     <div class="card-body">
-                        <h4 class="card-title text-primary"><?php echo $isi['merk'];?></h4>
-                        
+                        <h4 class="card-title text-primary"><?php echo $isi['nama_mobil'] ?? $isi['merk'];?></h4>
+
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>Tahun Terbit: <?php echo htmlspecialchars($isi['tahun_terbit'] ?? 'Tidak tersedia'); ?><br>
+                                <i class="fas fa-users me-1"></i>Jumlah Kursi: <?php echo htmlspecialchars($isi['jumlah_kursi'] ?? 'Tidak tersedia'); ?>
+                            </small>
+                        </div>
+
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <?php if($isi['status'] == 'Tersedia'){?>
                                 <span class="status-badge bg-success text-white">
@@ -401,6 +408,60 @@
                                 <input type="number" name="lama_sewa" id="lama_sewa" required class="form-control" placeholder="Masukkan Lama Sewa" min="1" value="1">
                             </div>
                             
+                            <!-- License Plate Selection -->
+                            <div class="driver-selection">
+                                <h5 class="fw-semibold mb-3">Pilihan Nomor Plat</h5>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Nomor Plat Tersedia</label>
+                                    <div class="row g-2" id="plat-options">
+                                        <?php
+                                        $sql_plat = "SELECT id_plat, no_plat, status_plat FROM mobil_plat WHERE id_mobil = ? ORDER BY no_plat";
+                                        $stmt_plat = mysqli_prepare($koneksi, $sql_plat);
+                                        mysqli_stmt_bind_param($stmt_plat, "i", $isi['id_mobil']);
+                                        mysqli_stmt_execute($stmt_plat);
+                                        $result_plat = mysqli_stmt_get_result($stmt_plat);
+
+                                        $available_plates = [];
+                                        while ($plat = mysqli_fetch_assoc($result_plat)) {
+                                            $available_plates[] = $plat;
+                                        }
+                                        mysqli_stmt_close($stmt_plat);
+
+                                        if (empty($available_plates)) {
+                                            echo '<div class="col-12"><div class="alert alert-warning">Tidak ada nomor plat tersedia untuk mobil ini.</div></div>';
+                                        } else {
+                                            foreach ($available_plates as $plat) {
+                                                $status_class = $plat['status_plat'] == 'Tersedia' ? 'success' : 'danger';
+                                                $status_text = $plat['status_plat'] == 'Tersedia' ? 'Tersedia' : 'Dipesan';
+                                                $disabled = $plat['status_plat'] != 'Tersedia' ? 'disabled' : '';
+                                                echo '<div class="col-md-6 col-lg-4">';
+                                                echo '<div class="form-check">';
+                                                echo '<input class="form-check-input" type="radio" name="id_plat_mobil" value="' . $plat['id_plat'] . '" id="plat_' . $plat['id_plat'] . '" ' . $disabled . '>';
+                                                echo '<label class="form-check-label" for="plat_' . $plat['id_plat'] . '">';
+                                                echo '<span class="badge bg-' . $status_class . ' me-2">' . $status_text . '</span>';
+                                                echo htmlspecialchars($plat['no_plat']);
+                                                echo '</label>';
+                                                echo '</div>';
+                                                echo '</div>';
+                                            }
+                                        }
+                                        ?>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+                                    <div>
+                                        <p class="mb-2">Pilih nomor plat secara manual atau biarkan sistem memilih otomatis</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="id_plat_mobil" value="otomatis" id="plat_otomatis" checked>
+                                            <label class="form-check-label fw-semibold" for="plat_otomatis">
+                                                <i class="fas fa-magic me-2"></i>Pilih Otomatis (Sistem akan memilih plat yang tersedia)
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Driver Selection -->
                             <div class="driver-selection">
                                 <h5 class="fw-semibold mb-3">Pilihan Supir (Opsional)</h5>
