@@ -51,6 +51,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
         echo '<script>alert("Gagal mengubah password.");window.location="profil.php"</script>';
     }
     exit();
+
+
+    // Notifikasi jika redirect dari booking
+if(isset($_GET['from_booking']) && $_GET['from_booking'] == 'true') {
+    echo '<div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Lengkapi profil Anda!</strong> Untuk melanjutkan proses booking, silakan lengkapi data identitas diri Anda terlebih dahulu. Data Anda akan aman dan terlindungi.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>';
+}
 }
 
 // Proses Update Profil
@@ -62,10 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_profil'])) {
     $provinsi = mysqli_real_escape_string($koneksi, $_POST['provinsi']);
     $kota_kabupaten = mysqli_real_escape_string($koneksi, $_POST['kota_kabupaten']);
     $jenis_kelamin = mysqli_real_escape_string($koneksi, $_POST['jenis_kelamin']);
+    $ktp = mysqli_real_escape_string($koneksi, $_POST['ktp'] ?? '');
     
-    $sql_update = "UPDATE login SET nama_pengguna = ?, username = ?, no_hp = ?, email = ?, provinsi = ?, kota_kabupaten = ?, jenis_kelamin = ? WHERE id_login = ?";
+    $sql_update = "UPDATE login SET nama_pengguna = ?, username = ?, no_hp = ?, email = ?, provinsi = ?, kota_kabupaten = ?, jenis_kelamin = ?, ktp = ? WHERE id_login = ?";
     $stmt_update = mysqli_prepare($koneksi, $sql_update);
-    mysqli_stmt_bind_param($stmt_update, "sssssssi", $nama_pengguna, $username, $no_hp, $email, $provinsi, $kota_kabupaten, $jenis_kelamin, $id);
+    mysqli_stmt_bind_param($stmt_update, "ssssssssi", $nama_pengguna, $username, $no_hp, $email, $provinsi, $kota_kabupaten, $jenis_kelamin, $ktp, $id);
     $success = mysqli_stmt_execute($stmt_update);
 
     // Proses Upload Foto
@@ -268,6 +279,12 @@ if (!file_exists($foto_path)) {
                                         <option value="Laki-laki" <?php echo ($user->jenis_kelamin ?? '') == 'Laki-laki' ? 'selected' : ''; ?>>Laki-laki</option>
                                         <option value="Perempuan" <?php echo ($user->jenis_kelamin ?? '') == 'Perempuan' ? 'selected' : ''; ?>>Perempuan</option>
                                     </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="ktp">No. KTP / NIK</label>
+                                    <input type="text" class="form-control" id="ktp" name="ktp" value="<?php echo htmlspecialchars($user->ktp ?? ''); ?>" placeholder="Contoh: 1234567890123456" maxlength="16">
                                 </div>
                             </div>
                         </div>

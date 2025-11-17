@@ -109,9 +109,15 @@
                                         <td><?= htmlspecialchars($method['account_number']) ?></td>
                                         <td><?= htmlspecialchars($method['account_name']) ?></td>
                                         <td>
-                                            <span class="badge badge-<?= $method['is_active'] ? 'success' : 'secondary' ?>">
-                                                <?= $method['is_active'] ? 'Aktif' : 'Nonaktif' ?>
-                                            </span>
+                                            <?php if ($method['is_active']): ?>
+                                                <span class="badge bg-info text-white">
+                                                    <i class="fas fa-check-circle me-1"></i>Aktif
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge bg-danger text-white">
+                                                    <i class="fas fa-times-circle me-1"></i>Nonaktif
+                                                </span>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <button type="button" class="btn btn-sm btn-warning btn-edit" 

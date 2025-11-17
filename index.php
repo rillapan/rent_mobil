@@ -2,39 +2,57 @@
 session_start();
 require 'koneksi/koneksi.php';
 
-// Check login status
-if (isset($_POST['login'])) {
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+// ambil featured car (gambar) dari DB untuk memastikan file ada
+$featured_image = 'default.png';
+$featured_merk = 'Featured Car';
+$stmt_feat = mysqli_prepare($koneksi, "SELECT merk, gambar FROM mobil ORDER BY id_mobil DESC LIMIT 1");
+if ($stmt_feat) {
+    mysqli_stmt_execute($stmt_feat);
+    $res_feat = mysqli_stmt_get_result($stmt_feat);
+    if ($res_feat) {
+        $f = mysqli_fetch_assoc($res_feat);
+        if (!empty($f['gambar'])) {
+            $featured_image = $f['gambar'];
+            $featured_merk = $f['merk'] ?? $featured_merk;
+        }
+    }
+    mysqli_stmt_close($stmt_feat);
+}
+
+// proses login
+if (isset($_POST['login'])) { //Jika tombol login ditekan
+    $username = $_POST['username'];  //Mengambil data username dari form login
+    $password = $_POST['password'];  //Mengambil data password dari form login
 
     // Query untuk mencari user
-    $query = mysqli_prepare($koneksi, "SELECT * FROM login WHERE username = ?");
-    mysqli_stmt_bind_param($query, "s", $username);
-    mysqli_stmt_execute($query);
-    $result_stmt = mysqli_stmt_get_result($query);
-    $user = mysqli_fetch_assoc($result_stmt);
-    mysqli_stmt_close($query);
+    $query = mysqli_prepare($koneksi, "SELECT * FROM login WHERE username = ?");  //Mempersiapkan query
+    mysqli_stmt_bind_param($query, "s", $username); //Mengikat parameter
+    mysqli_stmt_execute($query); //Menjalankan query
+    $result_stmt = mysqli_stmt_get_result($query); //Mendapatkan hasil query
+    $user = mysqli_fetch_assoc($result_stmt); //Mengambil data user
+    mysqli_stmt_close($query); //Menutup statement
 
+    // Jika user ditemukan
     if ($user) {
         // Verifikasi password
-        if (md5($password) == $user['password']) {
-            $_SESSION['USER'] = $user;
+        if (md5($password) == $user['password']) {  //Cek kecocokan password dengan hash di database
+            $_SESSION['USER'] = $user; //Menyimpan data user ke session
 
             // Redirect berdasarkan level
-            if ($user['level'] == 'admin') {
-                header("Location: admin/index.php");
+            if ($user['level'] == 'admin') {  //Jika level admin
+                header("Location: admin/index.php"); //Arahkan ke halaman admin
             } else {
-                header("Location: index.php");
+                header("Location: index.php"); //Arahkan ke halaman utama
             }
-            exit();
+            exit(); 
         } else {
             // Password salah
-            header("Location: index.php?status=wrongpassword");
+            header("Location: index.php?status=wrongpassword"); //Password yang dimasukkan salah
             exit();
         }
     } else {
         // Username tidak ditemukan
-        header("Location: index.php?status=usernotfound");
+        header("Location: index.php?status=usernotfound"); //Username tidak terdaftar di database
         exit();
     }
 }
@@ -237,10 +255,10 @@ if (isset($_POST['login'])) {
 
         /* Hero Section */
         .hero-section {
-            background: linear-gradient(135deg, 
-                rgba(26, 35, 126, 0.95) 0%, 
+            background: linear-gradient(135deg,
+                rgba(26, 35, 126, 0.95) 0%,
                 rgba(13, 20, 82, 0.95) 100%),
-                url('assets/image/all-new-xenia-exterior-tampak-perspektif-depan---varian-1.5r-ads.jpg');
+                url('assets/image/1643012563all-new-xenia-exterior-tampak-perspektif-depan---varian-1.5r-ads.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -1284,8 +1302,8 @@ if (isset($_POST['login'])) {
                         <!-- Featured Car Card -->
                         <div class="featured-car-card">
                             <div class="car-image-container">
-                                <img src="assets/image/all-new-xenia-exterior-tampak-perspektif-depan---varian-1.5r-ads.jpg" 
-                                     alt="Featured Car" class="car-image">
+                                <img src="assets/image/<?= htmlspecialchars($featured_image); ?>" 
+                                     alt="<?= htmlspecialchars($featured_merk); ?>" class="car-image">
                                 <div class="car-badge">POPULER</div>
                             </div>
                             <div class="car-info">
@@ -1590,7 +1608,9 @@ if (isset($_POST['login'])) {
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form method="POST" action="">
+
+                    <!--  Modal Form Login di Frontend -->
+                    <form method="POST" action=""> 
                         <div class="form-group">
                             <label for="username">Username</label>
                             <input type="text" class="form-control" id="username" name="username" placeholder="Masukkan username" required>
@@ -1731,6 +1751,7 @@ if (isset($_POST['login'])) {
             }
         });
 
+        // Counter Animation
         $(document).ready(function() {
             // Counter Animation
             function animateCounter(element, target, duration = 2000) {
@@ -1921,7 +1942,7 @@ if (isset($_POST['login'])) {
                         success: function(response) {
                             // Since it's a redirect, we handle success via URL status
                             // But for AJAX, we can check response or assume success
-                            window.location.href = 'index.php?status=registersuccess';
+                            window.location.href = 'index.php?status=registersuccess'; //Pendaftaran berhasil
                         },
                         error: function(xhr, status, error) {
                             $('#submitBtn').prop('disabled', false).html('<i class="fas fa-user-plus mr-2"></i>Daftar Sekarang');
@@ -1937,11 +1958,11 @@ if (isset($_POST['login'])) {
             });
 
             // Show status messages based on URL parameter
-            function showStatusMessage() {
-                const urlParams = new URLSearchParams(window.location.search);
-                const status = urlParams.get('status');
+            function showStatusMessage() { //parameter status dari proses.php
+                const urlParams = new URLSearchParams(window.location.search); //mengambil parameter dari url
+                const status = urlParams.get('status'); //mengambil nilai parameter status
 
-                if (status === 'registersuccess') {
+                if (status === 'registersuccess') {  //Pendaftaran berhasil
                     Swal.fire({
                         title: 'Pendaftaran Berhasil!',
                         html: '<i class="fas fa-check-circle fa-3x text-success mb-3"></i><br><strong>Selamat!</strong><br>Akun Anda telah berhasil didaftarkan. Silakan login untuk melanjutkan.',
@@ -1957,7 +1978,7 @@ if (isset($_POST['login'])) {
                             $('#loginModal').modal('show');
                         }
                     });
-                } else if (status === 'registerfailed') {
+                } else if (status === 'registerfailed') { //Username sudah digunakan
                     Swal.fire({
                         title: 'Pendaftaran Gagal!',
                         html: '<i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i><br><strong>Username sudah digunakan</strong><br>Silakan gunakan username yang berbeda.',

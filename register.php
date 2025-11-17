@@ -225,6 +225,7 @@ require 'koneksi/koneksi.php';
             </div>
 
             <div class="register-body">
+           <!-- //1. FORM REGISTRASI (Frontend - register.php)      -->
                 <form id="registerForm" method="post" action="koneksi/proses.php?id=daftar">
                     <div class="form-group">
                         <label for="nama" class="font-weight-bold">
@@ -373,16 +374,16 @@ require 'koneksi/koneksi.php';
                 }
             });
 
-            // Form validation
+            // proses validasi dan submit form
             $('#registerForm').on('submit', function(e) {
                 e.preventDefault();
 
-                const nama = $('#nama').val().trim();
-                const user = $('#user').val().trim();
-                const noHp = $('#no_hp').val().trim();
-                const email = $('#email').val().trim();
-                const pass = $('#pass').val();
-                const confirmPass = $('#confirm_pass').val();
+                const nama = $('#nama').val().trim();   //nama minimal 2 karakter 
+                const user = $('#user').val().trim(); //username minimal 3 karakter
+                const noHp = $('#no_hp').val().trim(); //nomor hp format indonesia
+                const email = $('#email').val().trim(); //email format yang benar
+                const pass = $('#pass').val(); //password minimal 6 karakter
+                const confirmPass = $('#confirm_pass').val();        //konfirmasi password
 
                 // Reset validation
                 $('.form-control').removeClass('is-invalid');

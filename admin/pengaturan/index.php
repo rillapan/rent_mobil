@@ -44,7 +44,7 @@ include '../header.php';
                             <label for="logo" class="form-label">Logo Website</label>
                             <input type="file" class="form-control" name="logo" id="logo" accept="image/*">
                             <?php if(!empty($info_web->logo)){ ?>
-                                <img src="../../assets/image/<?php echo htmlspecialchars($info_web->logo); ?>" alt="Logo" style="max-width: 100px; margin-top: 10px;">
+                                <img src="../../assets/image/<?php echo urlencode($info_web->logo); ?>" alt="Logo" style="max-width: 100px; margin-top: 10px;">
                             <?php } ?>
                         </div>
                         <div class="d-grid gap-2">

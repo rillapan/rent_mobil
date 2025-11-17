@@ -9,6 +9,42 @@
         echo '<script>alert("Harap login !");window.location="index.php"</script>';
     }
     
+    // CEK APAKAH USER SUDAH MELENGKAPI PROFIL
+    $id_user = $_SESSION['USER']['id_login'];
+    // tambahkan kolom ktp pada query profil
+    $check_profil = mysqli_query($koneksi, "SELECT nama_pengguna, no_hp, email, provinsi, kota_kabupaten, jenis_kelamin, ktp FROM login WHERE id_login = '$id_user'");
+    $profil_data = mysqli_fetch_assoc($check_profil);
+    
+    // Cek field-field penting yang harus diisi
+    $profil_lengkap = true;
+    $field_kosong = array();
+    
+    if(empty($profil_data['nama_pengguna']) || $profil_data['nama_pengguna'] == '') {
+        $profil_lengkap = false;
+        $field_kosong[] = 'nama lengkap';
+    }
+    if(empty($profil_data['no_hp']) || $profil_data['no_hp'] == '') {
+        $profil_lengkap = false;
+        $field_kosong[] = 'nomor HP';
+    }
+    if(empty($profil_data['email']) || $profil_data['email'] == '') {
+        $profil_lengkap = false;
+        $field_kosong[] = 'email';
+    }
+    if(empty($profil_data['provinsi']) || $profil_data['provinsi'] == '') {
+        $profil_lengkap = false;
+        $field_kosong[] = 'provinsi';
+    }
+    if(empty($profil_data['kota_kabupaten']) || $profil_data['kota_kabupaten'] == '') {
+        $profil_lengkap = false;
+        $field_kosong[] = 'kota/kabupaten';
+    }
+    if(empty($profil_data['jenis_kelamin']) || $profil_data['jenis_kelamin'] == '') {
+        $profil_lengkap = false;
+        $field_kosong[] = 'jenis kelamin';
+    }
+
+    
     $id = isset($_GET['id']) ? $_GET['id'] : '';
     if (empty($id)) {
         echo '<script>alert("ID mobil tidak ditemukan!");window.location="blog.php"</script>';
@@ -37,6 +73,7 @@
     <title>Booking Mobil - <?= htmlspecialchars($isi['merk']); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
         :root {
             --primary: #1A237E;
@@ -302,12 +339,291 @@
                 margin-bottom: 0;
             }
         }
+
+        .form-control[readonly] {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+            color: #495057;
+        }
+        
+        .form-control[readonly]:focus {
+            border-color: #e9ecef;
+            box-shadow: none;
+        }
+
+        /* Professional Sweet Alert Custom Style */
+        .swal-professional {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
+            border-radius: 24px;
+            border: none;
+            box-shadow: 0 25px 80px rgba(26, 35, 126, 0.3);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .swal-professional::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #FF6B35, #FF8E53, #FF6B35);
+            background-size: 200% 100%;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        .swal-professional .swal-title {
+            color: white;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 1.25rem;
+            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .swal-professional .swal-text {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1.05rem;
+            line-height: 1.7;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .swal-professional .swal-icon {
+            width: 90px;
+            height: 90px;
+            margin: 1.5rem auto 1rem;
+            border: 3px solid rgba(255, 215, 0, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            animation: gentlePulse 2.5s ease-in-out infinite;
+        }
+
+        .swal-professional .swal-icon--warning {
+            border-color: rgba(255, 215, 0, 0.5);
+        }
+
+        .swal-professional .swal-icon--warning .swal-icon--warning__body,
+        .swal-professional .swal-icon--warning .swal-icon--warning__dot {
+            background-color: #FFD700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .swal-professional .swal-button-container {
+            margin-top: 2rem;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .swal-professional .swal-button {
+            background: linear-gradient(135deg, #FF6B35 0%, #FF8E53 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .swal-professional .swal-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .swal-professional .swal-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(255, 107, 53, 0.4);
+            background: linear-gradient(135deg, #E55A2B 0%, #FF7B42 100%);
+        }
+
+        .swal-professional .swal-button:hover::before {
+            left: 100%;
+        }
+
+        .swal-professional .swal-button:active {
+            transform: translateY(-1px);
+        }
+
+        .swal-professional .swal-button--cancel {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.8);
+            box-shadow: none;
+        }
+
+        .swal-professional .swal-button--cancel:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.1);
+        }
+
+        /* Feature Cards */
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #FFD700, #FFE55C);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-size: 1.25rem;
+            color: #1a237e;
+        }
+
+        /* Animations */
+        @keyframes gentlePulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 0 10px rgba(255, 215, 0, 0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Progress indicator */
+        .profile-progress {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            height: 6px;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+
+        .profile-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #FF6B35, #FF8E53);
+            border-radius: 10px;
+            width: 30%;
+            animation: progressFill 2s ease-in-out;
+        }
+
+        @keyframes progressFill {
+            from {
+                width: 0%;
+            }
+            to {
+                width: 30%;
+            }
+        }
+
+        /* Floating Animation */
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0% { transform: translate(0, 0px); }
+            50% { transform: translate(0, -10px); }
+            100% { transform: translate(0, 0px); }
+        }
+
+        /* Profile Required Badge */
+        .profile-required-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #FF6B35, #FF8E53);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+            z-index: 1000;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Profile Required Badge -->
+    <?php if(!$profil_lengkap): ?>
+    <div class="profile-required-badge floating">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        Profil Perlu Dilengkapi
+    </div>
+    <?php endif; ?>
+    
     <div class="booking-container py-4">
-      
-        
         <div class="row">
             <!-- Mobil Information Card -->
             <div class="col-lg-4 mb-4">
@@ -370,15 +686,19 @@
                         <form method="post" action="koneksi/proses.php?id=booking" id="bookingForm">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="ktp" class="form-label fw-semibold">No. KTP / NIK</label>
-                                        <input type="text" name="ktp" id="ktp" required class="form-control" placeholder="Masukkan No. KTP / NIK">
+                                    <div class="form-group">
+                                        <label for="nama">Nama Lengkap</label>
+                                        <input type="text" class="form-control" id="nama" name="nama" 
+                                               value="<?php echo htmlspecialchars($profil_data['nama_pengguna'] ?? $_SESSION['USER']['nama_pengguna'] ?? ''); ?>" 
+                                               placeholder="Masukkan nama lengkap" required readonly>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="mb-3">
-                                        <label for="nama" class="form-label fw-semibold">Nama Lengkap</label>
-                                        <input type="text" name="nama" id="nama" required class="form-control" placeholder="Masukkan Nama Lengkap">
+                                    <div class="form-group">
+                                        <label for="ktp">No. KTP / NIK</label>
+                                        <input type="text" class="form-control" id="ktp" name="ktp" 
+                                               value="<?php echo htmlspecialchars($profil_data['ktp'] ?? $_SESSION['USER']['ktp'] ?? ''); ?>" 
+                                               placeholder="Masukkan No. KTP / NIK" required readonly>
                                     </div>
                                 </div>
                             </div>
@@ -513,9 +833,13 @@
                                 <a href="blog.php" class="btn btn-outline-secondary me-md-2">
                                     <i class="fas fa-arrow-left me-1"></i> Kembali
                                 </a>
-                                <?php if($isi['status'] == 'Tersedia'){?>
+                                <?php if($isi['status'] == 'Tersedia' && $profil_lengkap){?>
                                     <button type="submit" class="btn btn-secondary px-4">
                                         <i class="fas fa-calendar-check me-1"></i> Lanjutkan Booking
+                                    </button>
+                                <?php }elseif($isi['status'] == 'Tersedia' && !$profil_lengkap){?>
+                                    <button type="button" class="btn btn-warning px-4" onclick="showProfileRequiredModal()" id="bookingBtnIncomplete">
+                                        <i class="fas fa-user-edit me-1"></i> Lanjutkan Booking
                                     </button>
                                 <?php }else{?>
                                     <button type="button" class="btn btn-danger px-4" disabled>
@@ -531,6 +855,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Set minimum date to today
@@ -616,8 +941,13 @@
             document.getElementById('lama_sewa').addEventListener('input', updateTotalHarga);
 
             // Event listener untuk form submission - clear sessionStorage
-            document.getElementById('bookingForm').addEventListener('submit', function() {
+            document.getElementById('bookingForm').addEventListener('submit', function(e) {
+                <?php if(!$profil_lengkap): ?>
+                e.preventDefault();
+                showProfileRequiredModal();
+                <?php else: ?>
                 sessionStorage.removeItem('bookingFormData');
+                <?php endif; ?>
             });
 
             function updateTotalHarga() {
@@ -639,7 +969,139 @@
 
             // Initialize total harga
             updateTotalHarga();
+
+            // Add animation for incomplete profile button
+            <?php if(!$profil_lengkap): ?>
+            const bookingBtn = document.getElementById('bookingBtnIncomplete');
+            if (bookingBtn) {
+                // Add pulse animation
+                bookingBtn.style.animation = 'pulse 2s infinite';
+                
+                // Color change animation
+                let colorState = true;
+                setInterval(() => {
+                    if (colorState) {
+                        bookingBtn.classList.remove('btn-warning');
+                        bookingBtn.classList.add('btn-danger');
+                    } else {
+                        bookingBtn.classList.remove('btn-danger');
+                        bookingBtn.classList.add('btn-warning');
+                    }
+                    colorState = !colorState;
+                }, 2000);
+            }
+            <?php endif; ?>
         });
+
+        // Professional Modal Function untuk Profil Required
+        function showProfileRequiredModal() {
+            const modalHTML = `
+                <div class="swal-professional">
+                   
+                    
+                    <h2 class="swal-title">
+                        <i class="fas fa-user-check me-2"></i>
+                        Lengkapi Profil Anda
+                    </h2
+                    
+                    <div class="swal-text">
+                        <p style="margin-bottom: 1.5rem; color: white;">
+                            Untuk melanjutkan proses booking, kami membutuhkan informasi profil lengkap Anda.
+                        </p>
+
+                        
+                        <div class="feature-card" style="display: flex; align-items: center; margin: 1.5rem 0;">
+                            <div class="feature-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div>
+                                <strong style="display: block; margin-bottom: 0.25rem; color: white;">Keamanan Terjamin</strong>
+                                <small style="color: white;">Data Anda dilindungi dengan enkripsi standar industri</small>
+                            </div>
+                        </div>
+
+                        <div class="feature-card" style="display: flex; align-items: center;">
+                            <div class="feature-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div>
+                                <strong style="display: block; margin-bottom: 0.25rem; color: white;">Proses Cepat</strong>
+                                <small style="color: white;">Hanya membutuhkan 2 menit untuk melengkapi</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Show SweetAlert2 dengan konfigurasi profesional
+            Swal.fire({
+                html: modalHTML,
+                width: 480,
+                padding: '2rem',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-user-edit me-2"></i>Lengkapi Profil Sekarang',
+                cancelButtonText: '<i class="fas fa-clock me-2"></i>Ingatkan Saya Nanti',
+                reverseButtons: true,
+                focusConfirm: false,
+                allowOutsideClick: false,
+                allowEscapeKey: true,
+                customClass: {
+                    popup: 'swal-professional',
+                    confirmButton: 'swal-button',
+                    cancelButton: 'swal-button swal-button--cancel'
+                },
+                buttonsStyling: false,
+                showClass: {
+                    popup: 'animate__animated animate__fadeInUp'
+                },
+                hideClass: {
+                    popup: 'animate__animated animate__fadeOutDown'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Redirect ke halaman profil dengan parameter tracking
+                    window.location.href = 'profil.php?from_booking=true&redirect_source=booking_modal';
+                } else if (result.dismiss === Swal.DismissReason.cancel) {
+                    // Tampilkan toast notification untuk reminder
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'info',
+                        title: 'Kami akan mengingatkan Anda nanti',
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        background: 'var(--primary)',
+                        color: 'white'
+                    });
+                }
+            });
+        }
+
+        // Optional: Tambahkan function untuk reminder setelah beberapa waktu
+        function setupProfileReminder() {
+            setTimeout(() => {
+                if (!localStorage.getItem('profile_reminder_shown')) {
+                    Swal.fire({
+                        title: 'Masih butuh bantuan?',
+                        text: 'Ingin melengkapi profil Anda sekarang?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Ya, Lengkapi Sekarang',
+                        cancelButtonText: 'Tidak, Terima Kasih',
+                        customClass: {
+                            popup: 'swal-professional'
+                        }
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = 'profil.php?from_booking=true';
+                        } else {
+                            localStorage.setItem('profile_reminder_shown', 'true');
+                        }
+                    });
+                }
+            }, 30000); // Reminder setelah 30 detik
+        }
     </script>
 </body>
 </html>

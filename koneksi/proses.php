@@ -2,129 +2,78 @@
 session_start();
  require 'koneksi.php';
 
-if($_GET['id'] == 'login'){
 
-    $user = $_POST['user'];
-
-    $pass = $_POST['pass'];
-
+//fungsi untuk login
+if($_GET['id'] == 'login'){ // Proses login
+    $user = $_POST['user']; // Mengambil data username dari form login
+    $pass = $_POST['pass'];  // Mengambil data password dari form login
     $stmt = mysqli_prepare($koneksi, "SELECT * FROM login WHERE username = ? AND password = md5(?)");
-
-    mysqli_stmt_bind_param($stmt, "ss", $user, $pass);
-
-    mysqli_stmt_execute($stmt);
-
-    $result_stmt = mysqli_stmt_get_result($stmt);
-
-    $result = [];
-
-    while ($row = mysqli_fetch_assoc($result_stmt)) {
-
-        $result[] = $row;
-
+    mysqli_stmt_bind_param($stmt, "ss", $user, $pass); // Mengikat parameter, fungsi "ss" untuk dua string
+    mysqli_stmt_execute($stmt);  // Menjalankan query
+    $result_stmt = mysqli_stmt_get_result($stmt); // Mendapatkan hasil query
+    $result = []; // Inisialisasi array hasil
+    while ($row = mysqli_fetch_assoc($result_stmt)) { // Mengambil data hasil query
+        $result[] = $row; // Menyimpan data ke array hasil
     }
+    mysqli_stmt_close($stmt); // Menutup statement
 
-    mysqli_stmt_close($stmt);
+    $hitung = count($result); // Menghitung jumlah hasil
 
-    $hitung = count($result);
-
-    if($hitung > 0)
-
-    {
-
-        $hasil = $result[0];
-
-        $_SESSION['USER'] = $hasil;
-
-        if($_SESSION['USER']['level'] == 'admin')
-
+    if($hitung > 0){  // Jika user ditemukan
+        $hasil = $result[0]; // Ambil data user pertama
+        $_SESSION['USER'] = $hasil; // Login sukses, simpan data user ke session
+        if($_SESSION['USER']['level'] == 'admin') // Jika user admin
         {
-
-            header('Location: ../admin/index.php?status=loginsuccess');
-
-        }
-
-        else
-
+            header('Location: ../admin/index.php?status=loginsuccess');// Redirect ke halaman admin
+        }else
         {
-
-            header('Location: ../blog.php?status=loginsuccess');
-
+            header('Location: ../blog.php?status=loginsuccess');// Redirect ke halaman utama
         }
-
     }
-
-    else
-
-    {
-
-        header('Location: ../index.php?status=loginfailed');
-
+    else                {
+        header('Location: ../index.php?status=loginfailed'); // Login gagal, redirect ke halaman login
     }
 
 }
 
-if($_GET['id'] == 'daftar')
-
+if($_GET['id'] == 'daftar') // Proses registrasi  , from registrasi akan dismpan ke databse tabel login
 {
+    // Mengambil data dari form registrasi
+    $nama = $_POST['nama']; // Mengambil data nama dari form registrasi
+    $user = $_POST['user']; // Mengambil data username dari form registrasi
+    $pass = md5($_POST['pass']); // Mengambil data password dari form registrasi dan mengenkripsinya dengan md5
+    $level = 'pengguna'; // Level user default adalah 'pengguna'
+    $no_hp = $_POST['no_hp']; // Mengambil data no_hp dari form registrasi
+    $email = $_POST['email']; // Mengambil data email dari form registrasi
 
-    $nama = $_POST['nama'];
-    $user = $_POST['user'];
-    $pass = md5($_POST['pass']);
-    $level = 'pengguna';
-    $no_hp = $_POST['no_hp'];
-    $email = $_POST['email'];
-
-    $stmt = mysqli_prepare($koneksi, "SELECT * FROM login WHERE username = ? OR email = ?");
-
-    mysqli_stmt_bind_param($stmt, "ss", $user, $email);
-
-    mysqli_stmt_execute($stmt);
-
-    $result_stmt = mysqli_stmt_get_result($stmt);
-
-    $result = [];
-
-    while ($row = mysqli_fetch_assoc($result_stmt)) {
-
-        $result[] = $row;
-
+    // Cek apakah username atau email sudah digunakan
+    $stmt = mysqli_prepare($koneksi, "SELECT * FROM login WHERE username = ? OR email = ?"); // Cek apakah username atau email sudah digunakan
+    mysqli_stmt_bind_param($stmt, "ss", $user, $email); // Mengikat parameter
+    mysqli_stmt_execute($stmt);  // Menjalankan query
+    $result_stmt = mysqli_stmt_get_result($stmt);  // Mendapatkan hasil query
+    $result = []; // Inisialisasi array hasil
+    while ($row = mysqli_fetch_assoc($result_stmt)) { // Mengambil data hasil query
+        $result[] = $row; // Menyimpan data ke array hasil
     }
+    mysqli_stmt_close($stmt); // Menutup statement
+    $hitung = count($result);  // Menghitung jumlah hasil
 
-    mysqli_stmt_close($stmt);
-
-    $hitung = count($result);
-
-    if($hitung > 0)
-
+    if($hitung > 0)  // Jika username atau email sudah digunakan
     {
-
         header('Location: ../register.php?status=registerfailed');
-
     }
-
-    else
-
+    else  // Jika username dan email belum digunakan
     {
-
         $sql = "INSERT INTO `login`(`nama_pengguna`, `username`, `password`, `level`, `no_hp`, `email`)
-
-                 VALUES (?,?,?,?,?,?)";
-
-        $stmt_insert = mysqli_prepare($koneksi, $sql);
-
-        mysqli_stmt_bind_param($stmt_insert, "ssssss", $nama, $user, $pass, $level, $no_hp, $email);
-
-        mysqli_stmt_execute($stmt_insert);
-
-        mysqli_stmt_close($stmt_insert);
-
-        header('Location: ../register.php?status=registersuccess');
-
+                 VALUES (?,?,?,?,?,?)"; // Query untuk memasukkan data user baru
+        $stmt_insert = mysqli_prepare($koneksi, $sql); // Mempersiapkan statement
+        mysqli_stmt_bind_param($stmt_insert, "ssssss", $nama, $user, $pass, $level, $no_hp, $email); // Mengikat parameter
+        mysqli_stmt_execute($stmt_insert); // Menjalankan query
+        mysqli_stmt_close($stmt_insert);  // Menutup statement
+        header('Location: ../register.php?status=registersuccess'); // Redirect ke halaman register dengan status sukses
     }
-
 }
-
+  
 if($_GET['id'] == 'booking')
 {
     mysqli_autocommit($koneksi, false); // Start transaction
